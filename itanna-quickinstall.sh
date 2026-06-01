@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 #
-# Itanna Quick Install — one-liner:  curl -fsSL https://raw.githubusercontent.com/roqueando/itanna/main/itanna-quickinstall.sh | bash
+# ⚡ Itanna Quick Install
+# ========================
+#
+# One-liner:
+#   curl -fsSL https://raw.githubusercontent.com/roqueando/itanna/main/itanna-quickinstall.sh | bash
 #
 # What this does:
 #   1. Clones the Itanna Emacs distribution from GitHub
@@ -9,6 +13,9 @@
 #   4. Creates ~/.itanna/notebooks/ for user files
 #
 # Requirements: git, emacs, python3, poetry (auto-installed if missing)
+#
+# ⚠️  Always check scripts before piping them to your shell.
+#    Review the source: https://github.com/roqueando/itanna
 
 set -euo pipefail
 
@@ -130,7 +137,6 @@ echo "  ────────────────────────
 echo ""
 ok "Installation complete!"
 info "Restart Emacs to load the Itanna distribution."
-echo ""
 echo "  Quick start:"
 echo "    ; h        — Show welcome page"
 echo "    ; o N      — Create a new notebook"
@@ -140,3 +146,17 @@ echo "    ; o e      — Execute org-babel code block"
 echo ""
 echo "  More info: $INSTALL_DIR/README.org"
 echo ""
+
+# ── Optional: launch Emacs ──────────────────────────────────────────────
+if command -v emacs >/dev/null 2>&1; then
+    echo "  Open Emacs now? [Y/n] "
+    read -r response
+    case "$response" in
+        [nN]|[nN][oO])
+            echo "  OK, run 'emacs' when you're ready." ;;
+        *)
+            echo "  Launching Emacs..."
+            emacs &
+            ;;
+    esac
+fi
