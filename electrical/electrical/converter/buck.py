@@ -30,6 +30,8 @@ from dataclasses import dataclass, field, asdict
 from typing import Optional
 import math
 
+from electrical.utils.prefixed import pp, p, to_table_row
+
 # ── Standard resistor/series values ──────────────────────────────────────
 
 E12_BASE = [1.0, 1.2, 1.5, 1.8, 2.2, 2.7, 3.3, 3.9, 4.7, 5.6, 6.8, 8.2]
@@ -217,42 +219,52 @@ class BuckSpecification:
         return self
 
     def summary(self) -> str:
-        """Return a human-readable summary string."""
+        """Return a human-readable summary string with SI-prefixed values."""
         lines = [
             "═" * 55,
             "  Buck Converter Design Summary",
             "═" * 55,
-            f"  Vin = {self.vin_nom:.1f} V  ({self.vin_min or self.vin_nom*0.9:.1f} – {self.vin_max or self.vin_nom*1.1:.1f} V)",
-            f"  Vout = {self.vout:.2f} V  @  {self.iout_max:.2f} A  (max)",
-            f"  Fsw = {self.fsw/1000:.0f} kHz",
-            f"  Vripple(max) = {self.vripple_max*1000:.1f} mV",
+            f"  Vin = {pp(self.vin_nom, 'V')}  ({pp(self.vin_min or self.vin_nom*0.9, 'V')} – {pp(self.vin_max or self.vin_nom*1.1, 'V')})",
+            f"  Vout = {pp(self.vout, 'V')}  @  {pp(self.iout_max, 'A')}  (max)",
+            f"  Fsw = {pp(self.fsw, 'Hz')}",
+            f"  Vripple(max) = {pp(self.vripple_max, 'V')}",
             "─" * 55,
             f"  Duty cycle (nom)      : {self.duty*100:.1f} %",
-            f"  Inductor              : {self.inductor*1e6:.0f} µH  (ΔIL = {self.inductor_ripple*1000:.0f} mA, peak = {self.inductor_peak*1000:.0f} mA)",
-            f"  Output capacitor      : {self.output_cap*1e6:.0f} µF  (ESR ≤ {self.output_cap_esr*1000:.0f} mΩ)",
-            f"  Input capacitor       : {self.input_cap*1e6:.0f} µF",
+            f"  Inductor              : {pp(self.inductor, 'H')}  (ΔIL = {pp(self.inductor_ripple, 'A')}, peak = {pp(self.inductor_peak, 'A')})",
+            f"  Output capacitor      : {pp(self.output_cap, 'F')}  (ESR ≤ {pp(self.output_cap_esr, 'Ω')})",
+            f"  Input capacitor       : {pp(self.input_cap, 'F')}",
             "─" * 55,
-            f"  MOSFET Vds(max)       : {self.mosfet_voltage:.1f} V",
-            f"  MOSFET Irms           : {self.mosfet_current*1000:.0f} mA",
-            f"  Diode Vrrm            : {self.diode_voltage:.1f} V",
-            f"  Diode Iavg            : {self.diode_current*1000:.0f} mA",
+            f"  MOSFET Vds(max)       : {pp(self.mosfet_voltage, 'V')}",
+            f"  MOSFET Irms           : {pp(self.mosfet_current, 'A')}",
+            f"  Diode Vrrm            : {pp(self.diode_voltage, 'V')}",
+            f"  Diode Iavg            : {pp(self.diode_current, 'A')}",
             "═" * 55,
         ]
         return "\n".join(lines)
 
     def to_table(self) -> list:
-        """Return results as a list of [parameter, value, unit] for org-mode tables."""
+        """Return results as [parameter, value, unit_with_prefix] for org-mode tables.
+
+        Each row is a list of three strings suitable for inserting into
+        an org-mode table with something like:
+
+            #+RESULTS:
+            | Parameter         | Value | Unit |
+            |-------------------+-------+------|
+            | Inductor          |  15.0 | µH   |
+            ...
+        """
         return [
             ["Duty cycle", f"{self.duty*100:.1f}", "%"],
-            ["Inductor", f"{self.inductor*1e6:.0f}", "µH"],
-            ["Inductor ripple", f"{self.inductor_ripple*1000:.0f}", "mA"],
-            ["Inductor peak", f"{self.inductor_peak*1000:.0f}", "mA"],
-            ["Output capacitor", f"{self.output_cap*1e6:.0f}", "µF"],
-            ["Input capacitor", f"{self.input_cap*1e6:.0f}", "µF"],
-            ["MOSFET Vds", f"{self.mosfet_voltage:.1f}", "V"],
-            ["MOSFET Irms", f"{self.mosfet_current*1000:.0f}", "mA"],
-            ["Diode Vrrm", f"{self.diode_voltage:.1f}", "V"],
-            ["Diode Iavg", f"{self.diode_current*1000:.0f}", "mA"],
+            to_table_row("Inductor", self.inductor, "H"),
+            to_table_row("Inductor ripple", self.inductor_ripple, "A"),
+            to_table_row("Inductor peak", self.inductor_peak, "A"),
+            to_table_row("Output capacitor", self.output_cap, "F"),
+            to_table_row("Input capacitor", self.input_cap, "F"),
+            to_table_row("MOSFET Vds", self.mosfet_voltage, "V"),
+            to_table_row("MOSFET Irms", self.mosfet_current, "A"),
+            to_table_row("Diode Vrrm", self.diode_voltage, "V"),
+            to_table_row("Diode Iavg", self.diode_current, "A"),
         ]
 
 
