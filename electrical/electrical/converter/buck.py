@@ -14,7 +14,8 @@ References:
   - Application notes: TI SLVA477B, ON Semiconductor AND9135
 
 Usage:
-    from electrical.converter.buck import design_buck, nearest_standard
+    from electrical.converter.buck import design_buck, BuckSpecification
+    from electrical.utils.eseries import nearest_value
 
     spec = design_buck(
         vin=12, vout=3.3, iout=2.0,
@@ -22,8 +23,14 @@ Usage:
         il_ripple_pct=0.30  # 30% inductor current ripple
     )
 
-    for k, v in spec.items():
-        print(f"{k:25s}: {v}")
+    # Pretty-print summary with SI prefixes
+    s = BuckSpecification(12, 3.3, 2.0, 300e3, 0.01)
+    s.design()
+    print(s.summary())
+
+    # Or get org-table rows
+    for row in s.to_table():
+        print(f"| {row[0]:25s} | {row[1]:>8s} | {row[2]:<6s} |")
 """
 
 from dataclasses import dataclass, field, asdict
@@ -31,92 +38,11 @@ from typing import Optional
 import math
 
 from electrical.utils.prefixed import pp, p, to_table_row
-
-# ── Standard resistor/series values ──────────────────────────────────────
-
-E12_BASE = [1.0, 1.2, 1.5, 1.8, 2.2, 2.7, 3.3, 3.9, 4.7, 5.6, 6.8, 8.2]
-E24_BASE = [1.0, 1.1, 1.2, 1.3, 1.5, 1.6, 1.8, 2.0, 2.2, 2.4, 2.7, 3.0,
-            3.3, 3.6, 3.9, 4.3, 4.7, 5.1, 5.6, 6.2, 6.8, 7.5, 8.2, 9.1]
-E48_BASE = [1.00, 1.05, 1.10, 1.15, 1.21, 1.27, 1.33, 1.40, 1.47, 1.54,
-            1.62, 1.69, 1.78, 1.87, 1.96, 2.05, 2.15, 2.26, 2.37, 2.49,
-            2.61, 2.74, 2.87, 3.01, 3.16, 3.32, 3.48, 3.65, 3.83, 4.02,
-            4.22, 4.42, 4.64, 4.87, 5.11, 5.36, 5.62, 5.90, 6.19, 6.49,
-            6.81, 7.15, 7.50, 7.87, 8.25, 8.66, 9.09, 9.53]
-
-def _generate_series(base, decades=(-2, 7)):
-    """Generate standard values over a range of decades.
-
-    Args:
-        base: List of base values normalized to [1.0, 10.0) range.
-              E12_BASE = [1.0, 1.2, 1.5, ...]
-              E48_BASE = [1.00, 1.05, 1.10, ...]
-        decades: Tuple of (min_exponent, max_exponent)
-
-    Returns:
-        Sorted list of standard values.
-    """
-    vals = []
-    for d in range(decades[0], decades[1] + 1):
-        mul = 10 ** d
-        for b in base:
-            vals.append(b * mul)
-    return sorted(vals)
-
-# Generate standard series
-# Resistor range: 0.01Ω to 10MΩ  (9 decades)
-E12_RESISTOR = _generate_series(E12_BASE, decades=(-2, 7))
-E24_RESISTOR = _generate_series(E24_BASE, decades=(-2, 7))
-E48_RESISTOR = _generate_series(E48_BASE, decades=(-2, 7))
-
-# Component range: 1nH/pF to 1kH/F (12 decades — covers everything)
-E12_COMPONENT = _generate_series(E12_BASE, decades=(-9, 3))
-
-
-def nearest_standard(value, series: str = "E24", component: bool = False) -> float:
-    """Find the nearest standard E-series value.
-
-    Args:
-        value: Desired value
-        series: "E12", "E24", or "E48"
-        component: If True, use wide component range (nH/pF to H/F)
-                   instead of resistor range (0.01Ω–10MΩ).
-
-    Returns:
-        Nearest standard value from the selected series.
-    """
-    if component:
-        pool = {"E12": E12_COMPONENT, "E24": E12_COMPONENT, "E48": E12_COMPONENT}.get(series.upper(), E12_COMPONENT)
-    else:
-        pool = {"E12": E12_RESISTOR, "E24": E24_RESISTOR, "E48": E48_RESISTOR}.get(series.upper(), E24_RESISTOR)
-    if value <= pool[0]:
-        return pool[0]
-    if value >= pool[-1]:
-        return pool[-1]
-    lo, hi = 0, len(pool) - 1
-    while lo <= hi:
-        mid = (lo + hi) // 2
-        if pool[mid] == value:
-            return pool[mid]
-        if pool[mid] < value:
-            lo = mid + 1
-        else:
-            hi = mid - 1
-    # Nearest of two candidates
-    if lo >= len(pool):
-        return pool[-1]
-    if hi < 0:
-        return pool[0]
-    return pool[lo] if (pool[lo] - value) < (value - pool[hi]) else pool[hi]
-
-
-def nearest_inductor(value: float) -> float:
-    """Find the nearest standard inductor value (E12 series, from 1 nH to 1 kH)."""
-    return nearest_standard(value, "E12", component=True)
-
-
-def nearest_capacitor(value: float) -> float:
-    """Find the nearest standard capacitor value (E12 series, from 1 pF to 1 F)."""
-    return nearest_standard(value, "E12", component=True)
+from electrical.utils.eseries import (
+    nearest_value as nearest_standard,
+    nearest_inductor,
+    nearest_capacitor,
+)
 
 
 # ── Buck converter design ────────────────────────────────────────────────

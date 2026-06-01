@@ -1,6 +1,7 @@
 """Tests for the buck converter design module."""
 
-from electrical.converter.buck import design_buck, BuckSpecification, nearest_standard
+from electrical.converter.buck import design_buck, BuckSpecification
+from electrical.utils.eseries import nearest_value as nearest_standard
 
 
 def test_nearest_standard_e24():
