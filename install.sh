@@ -147,6 +147,13 @@ main() {
         esac
     done
 
+    # Create user data directory
+    local itanna_user_dir="$HOME/.itanna/notebooks"
+    if [ ! -d "$itanna_user_dir" ]; then
+        mkdir -p "$itanna_user_dir"
+        ok "Created $itanna_user_dir for user notebooks"
+    fi
+
     check_deps
     echo ""
 
