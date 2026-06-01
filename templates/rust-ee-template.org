@@ -1,0 +1,82 @@
+#+TITLE: Rust Project — Embedded / Simulation
+#+DATE: <2026-06-01>
+#+PROPERTY: header-args:rust :results output
+
+This template shows how to create and interact with Rust projects
+for electrical engineering (embedded firmware, signal processing, etc.)
+
+* Cargo Project from Scratch
+
+Create a new Cargo project with:
+#+begin_src sh :results output
+cargo new --bin itanna-ee-crate
+cd itanna-ee-crate
+#+end_src
+
+* Add EE Dependencies
+
+#+begin_src sh :results output
+cd itanna-ee-crate
+cargo add nalgebra          # Linear algebra (matrix ops for circuits)
+cargo add rustfft           # FFT for signal analysis
+cargo add plotters           # Plotting in Rust
+#+end_src
+
+* Code Block: Embedded FIR Filter
+
+#+begin_src rust :results output :exports both
+// Simple FIR filter implementation for signal processing
+struct FIRFilter {
+    taps: Vec<f64>,
+    buffer: Vec<f64>,
+    index: usize,
+}
+
+impl FIRFilter {
+    fn new(taps: Vec<f64>) -> Self {
+        let len = taps.len();
+        Self {
+            taps,
+            buffer: vec![0.0; len],
+            index: 0,
+        }
+    }
+
+    fn process(&mut self, sample: f64) -> f64 {
+        self.buffer[self.index] = sample;
+        let mut result = 0.0;
+        for (i, &tap) in self.taps.iter().enumerate() {
+            let idx = (self.index + self.buffer.len() - i) % self.buffer.len();
+            result += tap * self.buffer[idx];
+        }
+        self.index = (self.index + 1) % self.buffer.len();
+        result
+    }
+}
+
+fn main() {
+    // Low-pass filter coefficients (example, 10-tap moving average-like)
+    let taps = vec![0.1; 10];
+    let mut fir = FIRFilter::new(taps);
+
+    // Test with a signal
+    println!("Testing FIR filter (low-pass, 10 taps):");
+    for i in 0..20 {
+        let signal = (i as f64 * 0.5).sin();
+        let filtered = fir.process(signal);
+        println!("n={:>2}  input={:>8.4}  output={:>8.4}", i, signal, filtered);
+    }
+}
+#+end_src
+
+* Run Tests
+
+#+begin_src sh :results output
+cd itanna-ee-crate && cargo check 2>&1
+#+end_src
+
+* Compile and Run
+
+#+begin_src sh :results output
+cd itanna-ee-crate && cargo run 2>&1
+#+end_src

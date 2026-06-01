@@ -1,0 +1,75 @@
+#+TITLE: Engineering Notebook
+#+AUTHOR:
+#+DATE: <2026-06-01>
+#+PROPERTY: header-args:python :session *Python-EE* :results output
+#+PROPERTY: header-args:julia  :session *Julia-EE*  :results output
+#+PROPERTY: header-args:python :results output :session *Python-EE*
+
+* Design Specifications
+| Parameter | Value | Unit |
+|-----------+-------+------|
+| Vin       |       | V    |
+| Vout      |       | V    |
+| Iout      |       | A    |
+| Fsw       |       | Hz   |
+| Vripple   |       | V    |
+
+* Calculations
+
+** Buck Converter
+
+Enter specs, then execute the block with ~; o e~ or ~C-c C-c~.
+
+#+begin_src python :results output :session *Python-EE* :exports both
+from electrical.converter.buck import design_buck
+
+# Configure your design parameters here:
+results = design_buck(
+    vin=12,       # Input voltage (V)
+    vout=3.3,     # Output voltage (V)
+    iout=2.0,     # Output current (A)
+    fsw=300e3,    # Switching frequency (Hz)
+    vripple=0.01, # Output voltage ripple (V)
+    il_ripple_pct=0.30,  # 30% inductor ripple
+)
+
+# Print results
+for k, v in results.items():
+    if isinstance(v, float):
+        print(f"{k:25s}: {v:.6e}")
+    else:
+        print(f"{k:25s}: {v}")
+#+end_src
+
+** Julia Calculations
+
+#+begin_src julia :results output :session *Julia-EE*
+println("Hello from Julia!")
+println("Julia version: ", VERSION)
+#+end_src
+
+* Interactive Analysis
+
+#+begin_src python :results output :session *Python-EE* :exports both
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Example: plot inductor current
+t = np.linspace(0, 1/300e3, 100)
+# ... your analysis here ...
+
+plt.figure(figsize=(8, 4))
+plt.plot(t * 1e6, np.ones_like(t))
+plt.xlabel("Time (µs)")
+plt.ylabel("Current (A)")
+plt.title("Inductor Current Waveform")
+plt.grid(True)
+plt.tight_layout()
+plt.show()
+#+end_src
+
+* Notes
+- Use ~; o e~ to execute a code block
+- Use ~; o v~ to inspect Python session variables
+- Use ~; o V~ to inspect Julia session variables
+- Use ~; o t~ to insert Python result as org-table

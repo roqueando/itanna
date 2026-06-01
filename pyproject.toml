@@ -1,0 +1,38 @@
+[build-system]
+requires = ["poetry-core>=2.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "itanna"
+version = "0.1.0"
+description = "Itanna — Emacs Distribution for Electrical Engineering"
+authors = ["Itanna"]
+readme = "README.org"
+license = "GPL-3.0-only"
+
+[tool.poetry.dependencies]
+python = ">=3.10"
+# Core electrical package (local)
+itanna-electrical = { path = "electrical", develop = true }
+# Core scientific stack (pulled by itanna-electrical, but explicit here too)
+numpy = ">=1.24"
+scipy = ">=1.10"
+matplotlib = ">=3.7"
+# Executable builder
+nuitka = ">=2.0"
+# Avoid building from source — these have pre-built wheels for macOS arm64
+contourpy = ">=1.3"
+kiwisolver = ">=1.4"
+
+[tool.poetry.group.dev.dependencies]
+pytest = ">=9.0"
+pytest-cov = ">=6.0"
+
+[tool.poetry.scripts]
+# CLI entry points for the distribution
+itanna-welcome = "itanna.cli.welcome:main"
+itanna-buck = "itanna.cli.buck:main"
+itanna-build-app = "itanna.executable.builder:cli_main"
+
+[tool.pytest.ini_options]
+testpaths = ["electrical/tests"]

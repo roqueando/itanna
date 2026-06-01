@@ -1,0 +1,168 @@
+#+TITLE: From Notebook to Standalone Executable
+#+AUTHOR: Itanna
+#+DATE: <2026-06-01>
+#+PROPERTY: header-args:python :session *Python-EE* :results output
+
+This notebook demonstrates how to create a standalone executable from
+a Python function using the Itanna [[file:../electrical/electrical/executable/builder.py][executable builder]].
+
+The flow:
+1. Define a Python function (with Tkinter or PySide6 GUI)
+2. Call ~build_app()~ to compile it with Nuitka
+3. Deploy the standalone binary
+
+* Step 1: Define your application
+
+#+begin_src python :results output :session *Python-EE* :exports both
+from electrical.executable.builder import tkinter_template, build_app
+
+# Define your calculator logic
+def calculate_buck(vin, vout, iout, fsw, vripple):
+    from electrical.converter.buck import design_buck
+    return design_buck(vin, vout, iout, fsw, vripple, as_dict=True)
+
+# Create the GUI body (tkinter code)
+ui_body = '''
+frame = ttk.Frame(root, padding="20")
+frame.pack(fill="both", expand=True)
+
+ttk.Label(frame, text="Buck Converter Calculator",
+          font=("Helvetica", 16)).pack(pady=(0, 20))
+
+# Input fields
+inputs = [
+    ("Input Voltage (V):", "vin", "12"),
+    ("Output Voltage (V):", "vout", "5"),
+    ("Output Current (A):", "iout", "2"),
+    ("Frequency (kHz):", "fsw", "300"),
+    ("Ripple (mV):", "vripple", "10"),
+]
+
+entries = {}
+for label, key, default in inputs:
+    row = ttk.Frame(frame)
+    row.pack(fill="x", pady=2)
+    ttk.Label(row, text=label, width=20).pack(side="left")
+    entries[key] = ttk.Entry(row)
+    entries[key].insert(0, default)
+    entries[key].pack(side="right", fill="x", expand=True)
+
+result_text = tk.Text(frame, height=10, width=60)
+result_text.pack(pady=10)
+
+def on_calculate():
+    try:
+        v = float(entries["vin"].get())
+        vo = float(entries["vout"].get())
+        i = float(entries["iout"].get())
+        f = float(entries["fsw"].get()) * 1e3
+        vr = float(entries["vripple"].get()) * 1e-3
+        r = calculate_buck(v, vo, i, f, vr)
+        result_text.delete("1.0", "end")
+        for k, val in r.items():
+            if isinstance(val, float):
+                result_text.insert("end", f"{k:25s}: {val:.4e}\\n")
+            else:
+                result_text.insert("end", f"{k:25s}: {val}\\n")
+    except Exception as ex:
+        result_text.delete("1.0", "end")
+        result_text.insert("end", f"Error: {ex}")
+
+ttk.Button(frame, text="Calculate", command=on_calculate).pack(pady=10)
+ttk.Button(frame, text="Quit", command=root.destroy).pack()
+'''
+
+# Generate the source code
+source = tkinter_template(
+    title="Buck Converter Calculator",
+    width=500,
+    height=500,
+    body=ui_body,
+    extra_imports="# Import your engineering modules\\nfrom electrical.converter.buck import design_buck",
+)
+
+print("Source code generated!")
+print(f"({len(source)} bytes)")
+#+end_src
+
+* Step 2: Write the source to a file
+
+#+begin_src python :results output :session *Python-EE* :exports both
+from electrical.executable.builder import write_script, tkinter_template
+
+ui_body = '''
+frame = ttk.Frame(root, padding="20")
+frame.pack(fill="both", expand=True)
+ttk.Label(frame, text="Hello from Itanna!",
+          font=("Helvetica", 24)).pack(expand=True)
+ttk.Button(frame, text="Click Me!",
+          command=lambda: print("Button clicked!")).pack(pady=20)
+ttk.Button(frame, text="Quit",
+          command=root.destroy).pack()
+'''
+
+source = tkinter_template(
+    title="Hello Itanna",
+    width=400,
+    height=300,
+    body=ui_body,
+)
+
+path = write_script(source, name="hello-itanna")
+print(f"Script written to: {path}")
+print(f"Run it with: python3 {path}")
+#+end_src
+
+* Step 3: Build standalone executable
+
+#+begin_src python :results output :session *Python-EE* :exports both
+from electrical.executable.builder import build_app
+
+ui_body = '''
+ttk.Label(root, text="Hello from Standalone Itanna!",
+          font=("Helvetica", 20)).pack(expand=True)
+ttk.Button(root, text="Quit", command=root.destroy).pack()
+'''
+
+# NOTE: Nuitka must be installed for this to work
+# Install with: pip install nuitka
+result = build_app(
+    func=None,  # Using template
+    name="hello-itanna",
+    gui="tkinter",
+    output_dir="~/Desktop/",
+    template_args={
+        "title": "Hello Itanna",
+        "width": 400,
+        "height": 300,
+        "body": ui_body,
+    },
+)
+
+if result["status"] == "success":
+    print(f"✅ Executable built: {result['binary_path']}")
+elif result["status"] == "error":
+    print(f"❌ Build failed: {result.get('error', 'unknown error')}")
+else:
+    print(f"Result: {result}")
+#+end_src
+
+* Appendix: Using the Func-Based API
+
+If you already have a function, use the shorter API:
+
+#+begin_src python :results output :session *Python-EE*
+from electrical.executable.builder import build_app
+
+def my_simple_app():
+    import tkinter as tk
+    from tkinter import ttk
+    root = tk.Tk()
+    root.title("Simple App")
+    ttk.Label(root, text="Hello!").pack()
+    root.mainloop()
+
+# Uncomment to build:
+# result = build_app(my_simple_app, name="simple-app", gui="tkinter", output_dir="~/Desktop/")
+# print(result)
+#+end_src

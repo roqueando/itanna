@@ -1,0 +1,87 @@
+#+TITLE: Buck Converter Design Calculator
+#+AUTHOR: Itanna
+#+DATE: <2026-06-01>
+#+PROPERTY: header-args:python :session *Python-EE* :results output
+#+PROPERTY: header-args:julia :session *Julia-EE* :results output
+
+* Design Specifications
+| Parameter | Value | Unit | Description                |
+|-----------+-------+------+----------------------------|
+| Vin       |    12 | V    | Input voltage              |
+| Vout      |   5.0 | V    | Output voltage             |
+| Iout      |   2.0 | A    | Maximum output current     |
+| Fsw       | 300e3 | Hz   | Switching frequency        |
+| Vripple   |  0.01 | V    | Output voltage ripple (max)|
+
+* Component Selection
+
+#+begin_src python :results output :session *Python-EE* :exports both
+from electrical.converter.buck import design_buck, nearest_standard
+
+# — Configuration —
+vin     = 12      # Input voltage (V)
+vout    = 5.0     # Output voltage (V)
+iout    = 2.0     # Max output current (A)
+fsw     = 300e3   # Switching frequency (Hz)
+vripple = 0.01    # Max output ripple (V)
+
+# — Run design —
+results = design_buck(
+    vin=vin, vout=vout, iout=iout,
+    fsw=fsw, vripple=vripple,
+    il_ripple_pct=0.30,
+    as_dict=True,
+)
+
+# — Pretty print —
+SEPARATOR = "─" * 50
+print(SEPARATOR)
+print("  BUCK CONVERTER — Component Selection")
+print(SEPARATOR)
+print(f"  Input:  {vin:>5.1f} V    Output: {vout:>5.2f} V @ {iout:>4.1f} A")
+print(f"  Fsw:    {fsw/1000:>6.0f} kHz    Ripple: {vripple*1000:>5.1f} mV")
+print(SEPARATOR)
+
+key_info = {
+    "Duty cycle (D)": (results["duty"] * 100, "%"),
+    "Inductor (L)": (results["inductor"] * 1e6, "µH"),
+    "Inductor ripple (ΔIL)": (results["inductor_ripple"] * 1000, "mA"),
+    "Inductor peak current": (results["inductor_peak"] * 1000, "mA"),
+    "Output capacitor (Cout)": (results["output_cap"] * 1e6, "µF"),
+    "Input capacitor (Cin)": (results["input_cap"] * 1e6, "µF"),
+    "MOSFET Vds rating": (results["mosfet_voltage"], "V"),
+    "MOSFET Irms": (results["mosfet_current"] * 1000, "mA"),
+    "Diode Vrrm rating": (results["diode_voltage"], "V"),
+    "Diode Iavg": (results["diode_current"] * 1000, "mA"),
+}
+
+for name, (value, unit) in key_info.items():
+    if isinstance(value, float):
+        print(f"  {name:30s}: {value:>10.2f} {unit}")
+    else:
+        print(f"  {name:30s}: {value:>10} {unit}")
+print(SEPARATOR)
+#+end_src
+
+* Standard Values Cross-Reference
+
+#+begin_src python :results output :session *Python-EE* :exports both
+from electrical.converter.buck import nearest_standard, nearest_inductor, nearest_capacitor
+
+# Find nearest standard values for the calculated components
+print("Standard Values")
+print("─" * 40)
+print(f"Inductor:      {nearest_inductor(4.7e-6)*1e6:.1f} µH")
+print(f"Capacitor:     {nearest_capacitor(22e-6)*1e6:.0f} µF")
+print(f"Resistor:      {nearest_standard(10000, 'E24'):.0f} Ω")
+print(f"Resistor (E12):{nearest_standard(10000, 'E12'):.0f} Ω")
+#+end_src
+
+* Notes
+| Keybinding | Action                              |
+|------------+-------------------------------------|
+| ~; o e~    | Execute current code block          |
+| ~; o i~    | Execute and insert result below     |
+| ~; o v~    | Show Python session variables       |
+| ~; o t~    | Insert result as org-table          |
+| ~; o n/p~  | Navigate between code blocks        |

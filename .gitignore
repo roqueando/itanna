@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+*.egg
+dist/
+build/
+.venv/
+build/
+dist/
+*.egg-info/
+
+# Emacs
+*~
+.#*
+\#*\#
+
+# OS
+.DS_Store

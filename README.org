@@ -1,0 +1,189 @@
+#+TITLE: Itanna — Emacs Distribution for Electrical Engineering
+#+AUTHOR: ayedero / osogyian
+#+DATE: 2026-06-01
+
+Itanna is an [[https://www.gnu.org/software/emacs/][Emacs]] distribution for electrical engineering, focused on four languages:
+
+- **Python** — primary notebook language (org-babel / Jupyter)
+- **Julia** — notebook language (org-babel)
+- **C/C++** — firmware, embedded, simulation
+- **Rust** — systems programming
+
+* Quick Start
+
+1. Run the installer:
+   #+begin_src sh
+   cd ~/projects/itanna
+   ./install.sh
+   #+end_src
+
+2. Restart Emacs. The welcome page will appear automatically.
+
+3. Open a notebook template via ~; o N~ or:
+   - ~C-x C-f~ → select ~templates/org-notebook.org~, or
+   - ~C-x C-f~ → ~templates/buck-calculator.org~
+
+* Virtual Environment
+
+Itanna uses [[https://python-poetry.org/][Poetry]] to manage a dedicated Python virtual environment
+at =~/.venv/= inside the project root. This venv contains all Python
+dependencies (numpy, scipy, matplotlib, nuitka) and the =electrical=
+package.
+
+The venv is **automatically activated** when you open any file under
+the =~/projects/itanna/= directory in Emacs. The activation sets:
+- =VIRTUAL_ENV=, =PATH=, =PYTHONPATH=, =ITANNA_ROOT= environment vars
+- =exec-path= so LSP and compile commands find the right Python
+- Python sessions in org-babel use the venv Python
+
+To manually re-activate: ~; V~
+
+* Keybindings
+
+** Main prefix: ~;~ (semicolon in normal mode)
+
+| Key     | Action                           |
+|---------+----------------------------------|
+| ~; w~   | Save buffer                      |
+| ~; f~   | Find file (projectile)           |
+| ~; e~   | Dired (projectile)               |
+| ~; p~   | Switch project                   |
+| ~; C~   | Compile project                  |
+| ~; S~   | Search in project (counsel-rg)   |
+| ~; g~   | Magit                            |
+| ~; t~   | Open vterm in project root       |
+| ~; h~   | Show welcome page                |
+| ~; V~   | Activate Python virtual env      |
+| ~; k~   | Kill workspace & buffers         |
+| ~; R c~ | Cargo check                      |
+| ~; R r~ | Cargo run                        |
+| ~; R t~ | Cargo test                       |
+| ~; R n~ | New Cargo project                |
+| ~; M b~ | CMake build                      |
+
+** Org-babel (under ~; o~)
+
+| Key       | Action                                    |
+|-----------+-------------------------------------------|
+| ~; o e~   | Execute current source block              |
+| ~; o '~   | Edit source block in its major mode       |
+| ~; o i~   | Execute and insert result below           |
+| ~; o v~   | Inspect Python session variables          |
+| ~; o V~   | Inspect Julia session variables           |
+| ~; o t~   | Insert Python result as org-table         |
+| ~; o n~   | Next source block                         |
+| ~; o p~   | Previous source block                     |
+| ~; o d~   | Demarcate (split) a source block          |
+| ~; o s~   | Switch to session buffer                  |
+| ~; o k~   | Remove source block result                |
+| ~M-n~     | Next source block (org-mode)              |
+| ~M-p~     | Previous source block (org-mode)          |
+
+** EE Tools (under ~; E~)
+
+| Key       | Action                                    |
+|-----------+-------------------------------------------|
+| ~; E b~   | Insert buck converter calculator snippet   |
+| ~; E x~   | Insert executable builder snippet         |
+| ~; E t~   | Run electrical package tests              |
+| ~; E o~   | Open electrical package directory         |
+
+* Templates
+
+| Template                                | Description                        |
+|-----------------------------------------+------------------------------------|
+| ~templates/org-notebook.org~           | Blank EE notebook                  |
+| ~templates/buck-calculator.org~        | Buck converter design walkthrough  |
+| ~templates/hello-executable.org~       | Function → standalone app          |
+| ~templates/rust-ee-template.org~       | Rust project for EE/signal proc    |
+
+Open with: ~; o N~ (notebook), ~; o B~ (buck), ~; o X~ (executable)
+
+* The ~electrical~ Python Package
+
+Located at =electrical/=, a pip-installable Python package providing EE
+calculation modules and the executable builder.
+
+** Converter Modules
+
+- =electrical.converter.buck= — Buck (step-down) converter component selection
+
+  Usage:
+  #+begin_src python
+  from electrical.converter.buck import design_buck
+  results = design_buck(vin=12, vout=3.3, iout=2.0, fsw=300e3, vripple=0.01)
+  #+end_src
+
+** Executable Builder
+
+- =electrical.executable.builder= — Build standalone binaries via Nuitka
+
+  #+begin_src python
+  from electrical.executable.builder import build_app, tkinter_template
+
+  source = tkinter_template(title="My App", body="...")
+  build_app(name="my-app", gui="tkinter", output_dir="~/Desktop/")
+  #+end_src
+
+See [[file:templates/hello-executable.org][hello-executable.org]] for a full walkthrough.
+
+* Architecture
+
+```
+~/projects/itanna/
+├── early-init.el          # Bootstrap (performance, package setup)
+├── init.el                # Main Emacs config (symlinked from ~/.emacs)
+├── modules/
+│   ├── 00-org-babel.el    # Org-babel config + keybindings
+│   ├── 01-langs.el        # Language-specific helpers
+│   ├── 02-ee-tools.el     # EE tool integrations
+│   └── 03-keybindings.el  # Custom keybindings reference
+├── electrical/            # Python EE package
+│   ├── pyproject.toml
+│   ├── electrical/
+│   │   ├── converter/     # Power converter modules
+│   │   └── executable/    # Standalone app builder
+│   └── tests/
+├── templates/             # Org-mode notebook templates
+│   ├── org-notebook.org
+│   ├── buck-calculator.org
+│   └── hello-executable.org
+├── install.sh             # Installer
+└── README.org             # This file
+```
+
+* Welcome Page
+
+On startup, Itanna shows a welcome page (~; h~) with:
+- Quick keybinding reference
+- Environment status (Python version, installed packages, venv status)
+- Links to templates and notebooks
+- Quick reference cards for org-babel, EE tools, Rust, and CMake
+
+The welcome page is an Org-mode buffer, so you can navigate links with
+~TAB~ and execute code blocks with ~C-c C-c~.
+
+* Dependencies
+
+- **Emacs** 30+ (with tree-sitter support)
+- **Python** 3.10+
+- **Julia** 1.9+ (optional, for Julia notebooks)
+- **Rust** (optional, for Rust development)
+- **GCC/Clang** (for C/C++ compilation)
+
+Optional Python packages:
+- ~numpy~, ~scipy~ — scientific computing
+- ~matplotlib~ — plotting
+- ~nuitka~ — standalone executable builder
+- ~PySide6~ — Qt GUI framework (alternative to Tkinter)
+
+* Development
+
+To run tests for the electrical package:
+#+begin_src sh
+cd ~/projects/itanna/electrical
+pip install -e ".[all]"
+python3 -m pytest tests/ -v
+#+end_src
+
+Or from Emacs: ~; E t~
