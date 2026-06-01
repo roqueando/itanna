@@ -11,17 +11,31 @@ Itanna is an [[https://www.gnu.org/software/emacs/][Emacs]] distribution for ele
 
 * Quick Start
 
-1. Run the installer:
+** One-liner install (recommended)
+
+   #+begin_src sh
+   curl -fsSL https://raw.githubusercontent.com/roqueando/itanna/main/itanna-quickinstall.sh | bash
+   #+end_src
+
+   Then restart Emacs. The welcome page will appear automatically.
+
+** Manual install
+
+   #+begin_src sh
+   git clone https://github.com/roqueando/itanna.git ~/projects/itanna
+   cd ~/projects/itanna
+   ./itanna-quickinstall.sh
+   #+end_src
+
+   Or if you already have the repo:
    #+begin_src sh
    cd ~/projects/itanna
    ./install.sh
    #+end_src
 
-2. Restart Emacs. The welcome page will appear automatically.
+3. Restart Emacs. The welcome page (~; h~) will appear automatically.
 
-3. Open a notebook template via ~; o N~ or:
-   - ~C-x C-f~ → select ~templates/org-notebook.org~, or
-   - ~C-x C-f~ → ~templates/buck-calculator.org~
+4. Create your first notebook: ~; o N~
 
 * Virtual Environment
 

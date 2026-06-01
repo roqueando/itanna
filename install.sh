@@ -7,6 +7,9 @@
 #   2. Installs the electrical Python package in development mode
 #   3. Suggests missing system dependencies
 #
+# One-liner (from GitHub):
+#   curl -fsSL https://raw.githubusercontent.com/roqueando/itanna/main/itanna-quickinstall.sh | bash
+#
 # Usage: ./install.sh [--python-only] [--emacs-only] [--help]
 
 set -euo pipefail
@@ -173,7 +176,10 @@ main() {
     info "Restart Emacs to load the Itanna distribution."
     echo ""
     info "Quick start:"
-    echo "    Create a new EE notebook with:   ; o n  (in org-mode, or use the template)"
+    echo "    Welcome page:                    ; h"
+    echo "    Create a new notebook:           ; o N"
+    echo "    Insert buck calculator:          ; E b"
+    echo "    Build executable:                ; E x"
     echo "    Insert buck calculator:          ; E b"
     echo "    Open org-babel keybindings:      ; o"
     echo "    Find files:                      ; f"
