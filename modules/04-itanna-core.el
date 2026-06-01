@@ -72,16 +72,40 @@ This is idempotent: calling it multiple times is safe."
 (defvar itanna-welcome-buffer "*Itanna*"
   "Name of the welcome buffer.")
 
-(defun itanna/welcome ()
-  "Display the Itanna welcome page.
+(defun itanna/open-readme ()
+  "Open the Itanna README.org file."
+  (interactive)
+  (find-file (expand-file-name "README.org" itanna-root)))
 
-Calls `python3 -m itanna.cli.welcome' to generate an Org-mode string,
-then displays it in a dedicated buffer in Org mode."
+(defun itanna/open-notebook ()
+  "Open a new EE notebook from template."
+  (interactive)
+  (find-file (expand-file-name "templates/org-notebook.org" itanna-root)))
+
+(defun itanna/open-buck-calculator ()
+  "Open the buck calculator template."
+  (interactive)
+  (find-file (expand-file-name "templates/buck-calculator.org" itanna-root)))
+
+(defun itanna/open-executable-demo ()
+  "Open the executable builder demo template."
+  (interactive)
+  (find-file (expand-file-name "templates/hello-executable.org" itanna-root)))
+
+(defun itanna/open-rust-template ()
+  "Open the Rust EE template."
+  (interactive)
+  (find-file (expand-file-name "templates/rust-ee-template.org" itanna-root)))
+
+(defun itanna/welcome ()
+  "Display the Itanna welcome page as an Org buffer with working links."
   (interactive)
   (itanna/ensure-venv)
-  (let ((buf (get-buffer-create itanna-welcome-buffer)))
+  (let ((buf (get-buffer-create itanna-welcome-buffer))
+        (root itanna-root))
     (with-current-buffer buf
-      (let ((inhibit-read-only t))
+      (let ((inhibit-read-only t)
+            (default-directory root))    ;; ← KEY FIX: set default-directory so file-links resolve
         (erase-buffer)
         (org-mode)
         (insert "#+TITLE: ⚡ Itanna — Welcome\n")
@@ -89,11 +113,12 @@ then displays it in a dedicated buffer in Org mode."
         (insert "#+STARTUP: overview\n")
         (insert "#+OPTIONS: ^:nil\n")
         (insert "\n")
-        (insert "[[file:README.org][README]]  |  ")
-        (insert "[[file:templates/org-notebook.org][New Notebook]]  |  ")
-        (insert "[[file:templates/buck-calculator.org][Buck Calculator]]  |  ")
-        (insert "[[file:templates/hello-executable.org][Build Executable]]  |  ")
-        (insert "[[file:templates/rust-ee-template.org][Rust Template]]\n")
+        ;; Button bar — each is a clickable elisp link with its own interactive command
+        (insert "[[elisp:itanna/open-readme][📖 README]]  |  ")
+        (insert "[[elisp:itanna/open-notebook][📓 New Notebook]]  |  ")
+        (insert "[[elisp:itanna/open-buck-calculator][⚡ Buck Calculator]]  |  ")
+        (insert "[[elisp:itanna/open-executable-demo][📦 Build Executable]]  |  ")
+        (insert "[[elisp:itanna/open-rust-template][🦀 Rust Template]]\n")
         (insert "\n")
         (insert "* Getting Started\n\n")
         (insert "| Keybinding | Action                          |\n")
@@ -104,7 +129,7 @@ then displays it in a dedicated buffer in Org mode."
         (insert "| ~; t~      | Terminal (vterm)                |\n")
         (insert "| ~; o e~    | Execute org-babel code block    |\n")
         (insert "| ~; o v~    | Inspect Python session vars     |\n")
-        (insert "| ~; o N~    | New EE notebook                 |\n")
+        (insert "| ~; o N~    | New notebook                    |\n")
         (insert "| ~; E b~    | Insert buck calculator snippet  |\n")
         (insert "| ~; E x~    | Insert executable builder       |\n")
         (insert "| ~; R n~    | New Rust/Cargo project          |\n")
@@ -113,7 +138,7 @@ then displays it in a dedicated buffer in Org mode."
         (insert "* Environment\n\n")
         (insert (format "| %-18s | %-30s |\n" "Component" "Status"))
         (insert (format "|------------------+--------------------------------|\n"))
-        (insert (format "| Itanna Root      | %s |\n" itanna-root))
+        (insert (format "| Itanna Root      | %s |\n" root))
         (insert (format "| Python           | %s |\n"
                         (shell-command-to-string "python3 --version 2>&1 | tr -d '\\n'")))
         (insert (format "| Venv Active      | %s |\n"
@@ -165,14 +190,18 @@ then displays it in a dedicated buffer in Org mode."
         (insert "| ~t~ | Cargo test         |\n")
         (insert "| ~n~ | New Cargo project  |\n")
         (insert "\n")
+        (insert "* How to Use This Page\n\n")
+        (insert "- **Click** any link above with your mouse, or\n")
+        (insert "- Move cursor to a link and press ~C-c C-o~ (~org-open-at-point~)\n")
+        (insert "- Press ~TAB~ or ~S-TAB~ to fold/unfold sections\n")
+        (insert "- Press ~; h~ to return to this page anytime\n")
         (goto-char (point-min))
-        (forward-line 2)  ;; Skip #+TITLE line
-        ;; Hide the front-matter
+        (forward-line 2)
         (org-cycle)
         (set-buffer-modified-p nil)
         (read-only-mode 1)))
     (switch-to-buffer buf)
-    (message "⚡ Welcome to Itanna!")))
+    (message "⚡ Welcome to Itanna!  Try clicking a button above or press C-c C-o on a link.")))
 
 ;; ── Auto-show welcome on startup ────────────────────────────────────────
 
