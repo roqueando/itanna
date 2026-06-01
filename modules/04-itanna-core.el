@@ -195,7 +195,7 @@ then displays it in a dedicated buffer in Org mode."
 (define-key my-semicolon-map (kbd "V") 'itanna/ensure-venv)
 
 ;; ── Trigger welcome on load (if this is an interactive session) ─────────
-(when (and (display-graphic-p) (called-interactively-p 'interactive nil))
+(when (display-graphic-p)
   (itanna--maybe-show-welcome))
 
 ;;; 04-itanna-core.el ends here

@@ -79,6 +79,8 @@
       mac-option-modifier 'none)
 
 ;; ── Evil mode ───────────────────────────────────────────────────────────
+;; Must set this BEFORE evil and evil-collection are loaded
+(setq evil-want-keybinding nil)
 (require 'evil)
 (evil-mode 1)
 (evil-escape-mode 1)
