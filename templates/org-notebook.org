@@ -50,8 +50,9 @@ println("Julia version: ", VERSION)
 
 * Interactive Analysis
 
-#+begin_src python :results output file :file itanna-plot-001.png :session *Python-EE* :exports both
+#+begin_src python :results value file :session *Python-EE* :exports both
 from electrical.utils.plot import figure, show_plot
+import matplotlib.pyplot as plt
 import numpy as np
 
 # Example: plot inductor current

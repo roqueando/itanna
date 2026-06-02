@@ -28,7 +28,7 @@ def teardown_function():
 
 
 def test_inline_plot_context_manager():
-    """Test the context manager produces a file and prints an org link."""
+    """Test the context manager produces a file (no stdout print)."""
     setup_function()
     import io
     from contextlib import redirect_stdout
@@ -39,14 +39,14 @@ def test_inline_plot_context_manager():
             plt.plot([1, 2, 3], [1, 4, 9])
             plt.title("Test")
 
+    # inline_plot no longer prints; just saves the file
     output = f.getvalue()
-    assert "[[file:" in output
-    assert ".png]]" in output
+    assert output == ""
     assert os.path.exists("itanna-plot-001.png")
 
 
 def test_figure_show_plot():
-    """Test the figure/show_plot API."""
+    """Test the figure/show_plot API returns filename, doesn't print."""
     setup_function()
     import io
     from contextlib import redirect_stdout
@@ -55,10 +55,12 @@ def test_figure_show_plot():
     with redirect_stdout(f):
         figure()
         plt.plot([0, 1], [0, 1])
-        show_plot()
+        result = show_plot()
 
     output = f.getvalue()
-    assert "[[file:" in output
+    # show_plot returns the filename, doesn't print it
+    assert output == ""
+    assert result == "itanna-plot-001.png"
     assert os.path.exists("itanna-plot-001.png")
 
 
@@ -75,22 +77,20 @@ def test_subplots():
 def test_counter_increment():
     """Test that the counter increments correctly."""
     setup_function()
-    import io
-    from contextlib import redirect_stdout
 
-    # First plot
-    with io.StringIO() as f:
-        with redirect_stdout(f):
-            with inline_plot():
-                plt.plot([1], [1])
-        assert "itanna-plot-001" in f.getvalue()
+    # First plot — use show_plot which returns the filename
+    figure()
+    plt.plot([1], [1])
+    r1 = show_plot()
+    assert r1 == "itanna-plot-001.png"
+    assert os.path.exists(r1)
 
     # Second plot
-    with io.StringIO() as f:
-        with redirect_stdout(f):
-            with inline_plot():
-                plt.plot([2], [2])
-        assert "itanna-plot-002" in f.getvalue()
+    figure()
+    plt.plot([2], [2])
+    r2 = show_plot()
+    assert r2 == "itanna-plot-002.png"
+    assert os.path.exists(r2)
 
 
 def test_ee_style():

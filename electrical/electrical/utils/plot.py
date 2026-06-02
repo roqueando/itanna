@@ -9,29 +9,22 @@ This module configures it to output inline PNG/SVG images
 that org-babel can capture and display in the buffer.
 
 Usage in org-babel:
-    #+begin_src python :results output file :file plot.png :session *Python-EE*
-    from electrical.utils.plot import inline_plot
+    #+begin_src python :results value file :session *Python-EE* :exports both
+    from electrical.utils.plot import figure, show_plot
     import matplotlib.pyplot as plt
 
-    with inline_plot():
-        plt.plot([1, 2, 3], [1, 4, 9])
-        plt.title("Example Plot")
-    #+end_src
-
-Or with the simpler short form:
-    #+begin_src python :results output file :file plot.png :session *Python-EE*
-    from electrical.utils.plot import *
-
-    figure()
+    figure(figsize=(8, 4))
     plt.plot([1, 2, 3], [1, 4, 9])
-    plt.title("Example")
+    plt.title("Example Plot")
     show_plot()
     #+end_src
 
 The magic is:
-  - :results output file  → tells org-babel to expect a file result
-  - :file plot.png         → saves the plot to a file and displays inline
-  - plt.savefig()          → saves without opening a window
+  - :results value file  → captures the return value (filename)
+                           and wraps it in [[file:...]] for inline display
+  - show_plot()          → saves the plot to a file (no window) and
+                           returns the filename for org-babel to display
+  - No X11/display needed → uses matplotlib Agg backend
 """
 
 import io
@@ -65,27 +58,22 @@ def _next_filename(ext: str = "png") -> str:
 def inline_plot(figsize=None, dpi=100, format="png", filename=None):
     """Context manager for inline org-babel plotting.
 
-    Saves the plot to a file instead of showing a window.
-    When used in an org-babel block with :results file, the
-    image is displayed inline.
+    Saves the plot to a file. Use `show_plot()` as the last
+    expression to return the file link, or use the context
+    manager for setup/teardown only (you still need to call
+    `show_plot()` or let the return value be the link).
 
     Args:
         figsize: Figure size as (width, height) in inches
         dpi: Resolution in dots per inch
         format: Image format ("png", "svg", "pdf")
         filename: Output filename (auto-generated if None)
-
-    Usage:
-        with inline_plot():
-            plt.plot(x, y)
-            plt.title("My Plot")
     """
     fig = plt.figure(figsize=figsize)
     yield
     fname = filename or _next_filename(format)
     plt.savefig(fname, dpi=dpi, format=format, bbox_inches="tight")
     plt.close(fig)
-    print(f"[[file:{fname}]]")
 
 
 # ── Simplified API ───────────────────────────────────────────────────────
@@ -102,20 +90,31 @@ def figure(figsize=None):
 
 
 def show_plot(filename=None, dpi=100, format="png"):
-    """Save the current plot to a file and print the org-link.
+    """Save the current plot to a file and return the filename.
 
-    This replaces plt.show() and outputs an org-mode image link
-    that org-babel can display inline.
+    This replaces plt.show(). Saves the figure and returns the filename.
+    Intended for org-babel with :results value — the return value becomes
+    the block result, and org-babel handles the [[file:...]] wrapping.
+
+    Use the return value as the last expression in your code block:
+
+        figure()
+        plt.plot(x, y)
+        show_plot('myplot.png')   # ← last expression, value is returned
 
     Args:
-        filename: Output filename (auto-generated if None)
-        dpi: Resolution
-        format: Image format
+        filename: Output filename (auto-generated if None).
+                  Use .png extension for inline display in org.
+        dpi: Resolution in dots per inch
+        format: Image format ("png", "svg", "pdf")
+
+    Returns:
+        String like "itanna-plot-001.png" — just the filename (no [[file:...]])
     """
     fname = filename or _next_filename(format)
     plt.savefig(fname, dpi=dpi, format=format, bbox_inches="tight")
     plt.close()
-    print(f"[[file:{fname}]]")
+    return fname
 
 
 def subplots(*args, **kwargs):
