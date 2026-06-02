@@ -66,15 +66,15 @@ print(SEPARATOR)
 * Standard Values Cross-Reference
 
 #+begin_src python :results output :session *Python-EE* :exports both
-from electrical.converter.buck import nearest_standard, nearest_inductor, nearest_capacitor
+from electrical.utils.eseries import nearest_inductor, nearest_capacitor, nearest_value
 
 # Find nearest standard values for the calculated components
 print("Standard Values")
 print("─" * 40)
-print(f"Inductor:      {nearest_inductor(4.7e-6)*1e6:.1f} µH")
-print(f"Capacitor:     {nearest_capacitor(22e-6)*1e6:.0f} µF")
-print(f"Resistor:      {nearest_standard(10000, 'E24'):.0f} Ω")
-print(f"Resistor (E12):{nearest_standard(10000, 'E12'):.0f} Ω")
+print(f"Inductor:      {pp(nearest_inductor(4.7e-6), 'H')}")
+print(f"Capacitor:     {pp(nearest_capacitor(22e-6), 'F')}")
+print(f"Resistor:      {pp(nearest_value(10000, 'E24'), 'Ω')}")
+print(f"Resistor (E12):{pp(nearest_value(10000, 'E12'), 'Ω')}")
 #+end_src
 
 * Notes

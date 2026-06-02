@@ -6,6 +6,7 @@ Helper modules for the electrical package.
 """
 
 from .prefixed import p, pp, si_format, si_scale
+from .plot import inline_plot, figure, show_plot, subplots, set_ee_style
 from .eseries import (
     nearest_value, nearest_resistor, nearest_inductor, nearest_capacitor,
     list_series, generate_series,

@@ -50,22 +50,20 @@ println("Julia version: ", VERSION)
 
 * Interactive Analysis
 
-#+begin_src python :results output :session *Python-EE* :exports both
+#+begin_src python :results output file :file itanna-plot-001.png :session *Python-EE* :exports both
+from electrical.utils.plot import figure, show_plot
 import numpy as np
-import matplotlib.pyplot as plt
 
 # Example: plot inductor current
 t = np.linspace(0, 1/300e3, 100)
-# ... your analysis here ...
 
-plt.figure(figsize=(8, 4))
+figure(figsize=(8, 4))
 plt.plot(t * 1e6, np.ones_like(t))
 plt.xlabel("Time (µs)")
 plt.ylabel("Current (A)")
 plt.title("Inductor Current Waveform")
 plt.grid(True)
-plt.tight_layout()
-plt.show()
+show_plot()
 #+end_src
 
 * Notes

@@ -11,6 +11,23 @@
         (:noweb   . "no"))
       org-babel-python-command "python3")
 
+;; ── Inline image display ────────────────────────────────────────────────
+;; Automatically display images when opening org files and after evaluation
+(setq org-display-inline-images t
+      org-redisplay-inline-images t
+      org-startup-with-inline-images t)
+
+;; When executing a Python code block with :file header, show the image inline
+(add-hook 'org-babel-after-execute-hook 'org-display-inline-images)
+
+;; Auto-toggle inline images on image links after evaluation
+(defun itanna/org-toggle-inline-images-on-eval ()
+  "Refresh inline image display after org-babel evaluation."
+  (when (eq major-mode 'org-mode)
+    (org-display-inline-images)))
+
+(add-hook 'org-babel-after-execute-hook 'itanna/org-toggle-inline-images-on-eval)
+
 ;; ── Python session defaults ─────────────────────────────────────────────
 ;; When a :session header is used, default to persistent Python process
 (setq org-babel-default-header-args:python
