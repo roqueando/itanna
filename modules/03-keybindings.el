@@ -85,6 +85,18 @@
 ;; ── CMake / C/C++ keybindings (under ; C) ────────────────────────────────
 (define-key my-semicolon-map (kbd "Mb") 'itanna/cmake-build)
 
+;; ── Toggle inline images ───────────────────────────────────────────────
+(defun itanna/toggle-inline-images ()
+  "Toggle display of inline images in the current Org buffer."
+  (interactive)
+  (if (bound-and-true-p org-display-inline-images)
+      (progn
+        (org-display-inline-images)
+        (message "Inline images refreshed"))
+    (message "org-display-inline-images is not enabled")))
+
+(define-key org-mode-map (kbd "C-c I") 'itanna/toggle-inline-images)
+
 ;; ── Global utils ────────────────────────────────────────────────────────
 
 ;; Restore TAB as self-insert (if needed)

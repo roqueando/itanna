@@ -217,6 +217,7 @@ from any buffer via `; h' always shows a fresh welcome page."
       (insert "- Move cursor to a link and press ~C-c C-o~ (~org-open-at-point~)\n")
       (insert "- Press ~TAB~ or ~S-TAB~ to fold/unfold sections\n")
       (insert "- Press ~; h~ to return to this page anytime\n")
+      (insert "- Press ~; o e~ to execute a code block — plots appear inline\n")
       (goto-char (point-min))
       ;; Move to the first headline (* Getting Started) before org-cycle
       (when (re-search-forward "^\\* " nil t)

@@ -18,26 +18,35 @@
       org-startup-with-inline-images t
       org-image-actual-width nil)  ;; Scale large images to fit the window
 
-;; After any org-babel execution, refresh inline images
-(defun itanna/org-show-inline-images-after-eval ()
-  "Refresh inline image display after org-babel evaluation.
-
-This runs after every code block execution so that plots saved
-via `show_plot()` (with :results value file) appear immediately
-as inline images."
+;; Helper: refresh inline images in current org buffer
+(defun itanna/org-refresh-inline-images (&optional frame)
+  "Refresh inline image display in the current Org buffer.
+Ignores FRAME argument (for hook compatibility)."
+  (ignore frame)
   (when (and (eq major-mode 'org-mode)
              (fboundp 'org-display-inline-images))
-    (org-display-inline-images)))
+    ;; First ensure font-lock has applied link faces
+    (when (fboundp 'font-lock-ensure)
+      (font-lock-ensure))
+    ;; Then display the images
+    (ignore-errors
+      (org-display-inline-images))))
 
-(add-hook 'org-babel-after-execute-hook 'itanna/org-show-inline-images-after-eval)
+;; Refresh after every code block execution
+(add-hook 'org-babel-after-execute-hook 'itanna/org-refresh-inline-images)
 
-;; Also show images when entering org-mode (for all buffers)
-(defun itanna/org-show-images-on-activate ()
-  "Display inline images when org-mode is entered."
-  (when (fboundp 'org-display-inline-images)
-    (org-display-inline-images)))
+;; Refresh when entering org-mode
+(add-hook 'org-mode-hook 'itanna/org-refresh-inline-images)
 
-(add-hook 'org-mode-hook 'itanna/org-show-images-on-activate)
+;; Refresh after any file opens (for notebooks)
+(add-hook 'find-file-hook 'itanna/org-refresh-inline-images)
+
+;; Refresh when Emacs finishes initializing (for welcome page)
+(add-hook 'window-setup-hook
+          (lambda ()
+            (when (get-buffer "*Itanna*")
+              (with-current-buffer (get-buffer "*Itanna*")
+                (itanna/org-refresh-inline-images)))))
 
 ;; ── Python default: :results value file for inline image support ────────
 ;; Using :results value file means:
