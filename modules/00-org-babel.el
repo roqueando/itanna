@@ -32,6 +32,33 @@ Ignores FRAME argument (for hook compatibility)."
     (ignore-errors
       (org-display-inline-images))))
 
+;; ── Pre-execute hook: align plot output directory with org buffer ───────
+;; This ensures show_plot() saves files to the org file's directory,
+;; so :results value file can resolve the [[file:...]] link correctly.
+;; It also sets the session buffer's default-directory to match.
+
+(defun itanna/ob-python-set-plot-dir (&optional info)
+  "Before executing a Python block, set ITANNA_PLOT_DIR and propagate
+`default-directory' to the session buffer so plots land in the right place.
+
+INFO is the src-block information alist from org-babel-pre-execute-hook."
+  (when-let* ((lang (or (and info (nth 0 info))
+                        (nth 0 (org-babel-get-src-block-info))))
+              ((string= lang "python")))
+    (let ((org-dir (file-name-directory (or (buffer-file-name) default-directory))))
+      ;; 1. Tell show_plot() where to save
+      (setenv "ITANNA_PLOT_DIR" org-dir)
+      ;; 2. Propagate default-directory to the session buffer so Python's
+      ;;    CWD matches the org buffer directory
+      (when-let* ((info (or info (org-babel-get-src-block-info)))
+                  (session (cdr (assq :session (nth 2 info))))
+                  ((not (string= session "none")))
+                  (session-buf (org-babel-session-buffer:python session)))
+        (with-current-buffer session-buf
+          (setq default-directory org-dir))))))
+
+(add-hook 'org-babel-pre-execute-hook 'itanna/ob-python-set-plot-dir)
+
 ;; Refresh after every code block execution
 (add-hook 'org-babel-after-execute-hook 'itanna/org-refresh-inline-images)
 
@@ -48,16 +75,15 @@ Ignores FRAME argument (for hook compatibility)."
               (with-current-buffer (get-buffer "*Itanna*")
                 (itanna/org-refresh-inline-images)))))
 
-;; ── Python default: :results value file for inline image support ────────
-;; Using :results value file means:
-;;   - The last expression's return value is the block result
-;;   - If it's a filename (from show_plot()), it becomes [[file:...]] inline
-;;   - If it's text, it's shown as-is
-;;   - Persistent session (*Python-EE*) for state between blocks
+;; ── Python defaults: persistent session, output by default ────────────
+;; Most EE blocks use :results output or :results value file explicitly.
+;; The global default is :results output so that text output blocks
+;; (like the buck converter) work out of the box.
+;; Blocks that generate plots should use :results value file explicitly.
 (setq org-babel-default-header-args:python
       (append org-babel-default-header-args:python
               '((:session . "*Python-EE*")
-                (:results . "value file")
+                (:results . "output")
                 (:exports . "both"))))
 
 ;; ── Julia session defaults ──────────────────────────────────────────────

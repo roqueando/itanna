@@ -46,16 +46,36 @@ import matplotlib.image as mpimg
 _plot_counter = [0]
 
 
-def _next_filename(ext: str = "png") -> str:
-    """Generate the next auto-named plot filename."""
+def _plot_output_dir() -> str:
+    """Return the directory where plot files should be saved.
+
+    Priority:
+      1. ITANNA_PLOT_DIR environment variable (set by Emacs pre-execute hook)
+      2. Current working directory
+    """
+    return os.environ.get("ITANNA_PLOT_DIR") or os.getcwd()
+
+
+def _next_filename(ext: str = "png", output_dir: str | None = None) -> str:
+    """Generate the next auto-named plot filename with an absolute path.
+
+    Args:
+        ext: File extension (default "png")
+        output_dir: Output directory (defaults to `_plot_output_dir()`)
+
+    Returns:
+        Absolute path string for the plot file.
+    """
     _plot_counter[0] += 1
-    return f"itanna-plot-{_plot_counter[0]:03d}.{ext}"
+    basename = f"itanna-plot-{_plot_counter[0]:03d}.{ext}"
+    outdir = output_dir or _plot_output_dir()
+    return os.path.join(outdir, basename)
 
 
 # ── Context manager ──────────────────────────────────────────────────────
 
 @contextmanager
-def inline_plot(figsize=None, dpi=100, format="png", filename=None):
+def inline_plot(figsize=None, dpi=100, format="png", filename=None, output_dir=None):
     """Context manager for inline org-babel plotting.
 
     Saves the plot to a file. Use `show_plot()` as the last
@@ -68,10 +88,11 @@ def inline_plot(figsize=None, dpi=100, format="png", filename=None):
         dpi: Resolution in dots per inch
         format: Image format ("png", "svg", "pdf")
         filename: Output filename (auto-generated if None)
+        output_dir: Output directory (default: ITANNA_PLOT_DIR env var or CWD)
     """
     fig = plt.figure(figsize=figsize)
     yield
-    fname = filename or _next_filename(format)
+    fname = filename or _next_filename(format, output_dir=output_dir)
     plt.savefig(fname, dpi=dpi, format=format, bbox_inches="tight")
     plt.close(fig)
 
@@ -89,10 +110,10 @@ def figure(figsize=None):
     plt.figure(figsize=figsize)
 
 
-def show_plot(filename=None, dpi=100, format="png"):
-    """Save the current plot to a file and return the filename.
+def show_plot(filename=None, dpi=100, format="png", output_dir=None):
+    """Save the current plot to a file and return the absolute filename.
 
-    This replaces plt.show(). Saves the figure and returns the filename.
+    This replaces plt.show(). Saves the figure and returns the absolute path.
     Intended for org-babel with :results value — the return value becomes
     the block result, and org-babel handles the [[file:...]] wrapping.
 
@@ -102,16 +123,28 @@ def show_plot(filename=None, dpi=100, format="png"):
         plt.plot(x, y)
         show_plot('myplot.png')   # ← last expression, value is returned
 
+    The output directory is determined by (in priority order):
+      1. The `output_dir` parameter
+      2. The ITANNA_PLOT_DIR environment variable (set automatically by
+         the Itanna Emacs distribution before block execution)
+      3. Current working directory
+
     Args:
         filename: Output filename (auto-generated if None).
                   Use .png extension for inline display in org.
         dpi: Resolution in dots per inch
         format: Image format ("png", "svg", "pdf")
+        output_dir: Output directory (default: ITANNA_PLOT_DIR env var or CWD)
 
     Returns:
-        String like "itanna-plot-001.png" — just the filename (no [[file:...]])
+        Absolute path like "/path/to/notebook/itanna-plot-001.png"
+        (no [[file:...]] wrapping — org-babel adds that)
     """
-    fname = filename or _next_filename(format)
+    outdir = output_dir or _plot_output_dir()
+    if filename:
+        fname = os.path.join(outdir, filename)
+    else:
+        fname = _next_filename(format, output_dir=outdir)
     plt.savefig(fname, dpi=dpi, format=format, bbox_inches="tight")
     plt.close()
     return fname

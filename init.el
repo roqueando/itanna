@@ -218,4 +218,9 @@
 (load (expand-file-name "modules/03-keybindings" user-emacs-directory) 'noerror)
 (load (expand-file-name "modules/04-itanna-core" user-emacs-directory) 'noerror)
 
+;; Don't auto-select the Python REPL window when running a session.
+;; Instead, run it in the background and keep focus on the org buffer.
+(setq python-shell-dedicated nil)
+
 ;;; init.el ends here
+

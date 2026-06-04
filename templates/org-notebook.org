@@ -3,7 +3,6 @@
 #+DATE: <%(format-time-string "%Y-%m-%d %a")>
 #+PROPERTY: header-args:python :session *Python-EE* :results output
 #+PROPERTY: header-args:julia  :session *Julia-EE*  :results output
-#+PROPERTY: header-args:python :results output :session *Python-EE*
 
 * Design Specifications
 | Parameter | Value | Unit |

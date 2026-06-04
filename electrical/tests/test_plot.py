@@ -28,7 +28,8 @@ def teardown_function():
 
 
 def test_inline_plot_context_manager():
-    """Test the context manager produces a file (no stdout print)."""
+    """Test the context manager produces a file (no stdout print).
+    Also verifies the saved file has an absolute path."""
     setup_function()
     import io
     from contextlib import redirect_stdout
@@ -42,11 +43,16 @@ def test_inline_plot_context_manager():
     # inline_plot no longer prints; just saves the file
     output = f.getvalue()
     assert output == ""
-    assert os.path.exists("itanna-plot-001.png")
+    # The context manager saves to an absolute path now
+    files = [f for f in os.listdir(".") if f.startswith("itanna-plot-")]
+    assert len(files) >= 1
+    # Ensure the file was created in the CWD
+    target = os.path.join(os.getcwd(), "itanna-plot-001.png")
+    assert os.path.exists(target)
 
 
 def test_figure_show_plot():
-    """Test the figure/show_plot API returns filename, doesn't print."""
+    """Test the figure/show_plot API returns absolute path, doesn't print."""
     setup_function()
     import io
     from contextlib import redirect_stdout
@@ -58,10 +64,11 @@ def test_figure_show_plot():
         result = show_plot()
 
     output = f.getvalue()
-    # show_plot returns the filename, doesn't print it
+    # show_plot returns the absolute path, doesn't print it
     assert output == ""
-    assert result == "itanna-plot-001.png"
-    assert os.path.exists("itanna-plot-001.png")
+    assert result.endswith("itanna-plot-001.png")
+    assert os.path.exists(result)
+    assert os.path.isabs(result)
 
 
 def test_subplots():
@@ -78,19 +85,21 @@ def test_counter_increment():
     """Test that the counter increments correctly."""
     setup_function()
 
-    # First plot — use show_plot which returns the filename
+    # First plot — use show_plot which returns the absolute path
     figure()
     plt.plot([1], [1])
     r1 = show_plot()
-    assert r1 == "itanna-plot-001.png"
+    assert r1.endswith("itanna-plot-001.png")
     assert os.path.exists(r1)
+    assert os.path.isabs(r1)
 
     # Second plot
     figure()
     plt.plot([2], [2])
     r2 = show_plot()
-    assert r2 == "itanna-plot-002.png"
+    assert r2.endswith("itanna-plot-002.png")
     assert os.path.exists(r2)
+    assert os.path.isabs(r2)
 
 
 def test_ee_style():
