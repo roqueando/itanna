@@ -46,6 +46,56 @@ export async function findVenvPath(workspaceRoot: string): Promise<string | null
 }
 
 /**
+ * Ensure the Itanna Jupyter kernel is registered.
+ * This creates a kernel spec so the Itanna venv appears as
+ * "Python 3 (Itanna)" in VSCode's Jupyter kernel picker.
+ */
+async function ensureItannaKernel(pythonBin: string, verbose: boolean): Promise<void> {
+  try {
+    // Check if ipykernel is available
+    const checkResult = execSync(
+      `"${pythonBin}" -c "import ipykernel; print('ok')" 2>/dev/null`,
+      { encoding: 'utf-8', timeout: 5000 }
+    ).trim();
+
+    if (checkResult !== 'ok') {
+      if (verbose) {
+        console.warn('ipykernel not available in venv. Install it: pip install ipykernel');
+      }
+      return;
+    }
+
+    // Check if the itanna kernel is already registered
+    const existingKernel = execSync(
+      `"${pythonBin}" -m jupyter kernelspec list 2>/dev/null`,
+      { encoding: 'utf-8', timeout: 5000 }
+    );
+
+    if (existingKernel.includes('itanna ')) {
+      if (verbose) console.log('✓ Itanna Jupyter kernel already registered');
+      return;
+    }
+
+    // Register the kernel
+    const result = execSync(
+      `"${pythonBin}" -m ipykernel install --user --name itanna --display-name "Python 3 (Itanna)" 2>&1`,
+      { encoding: 'utf-8', timeout: 10000 }
+    ).trim();
+
+    console.log(`✓ Itanna Jupyter kernel registered: ${result}`);
+
+    // Notify the user
+    if (vscode.window) {
+      vscode.window.showInformationMessage(
+        '⚡ Itanna Jupyter kernel registered. You can now select "Python 3 (Itanna)" in your notebooks.'
+      );
+    }
+  } catch (err) {
+    if (verbose) console.warn('Failed to register Itanna Jupyter kernel:', err);
+  }
+}
+
+/**
  * Derive the Itanna project root from a venv path.
  * The venv is typically at <itanna-root>/.venv/
  */
@@ -161,6 +211,9 @@ export async function activateVenv(verbose: boolean = false): Promise<boolean> {
     // Verify activation
     const version = execSync(`"${pythonBin}" --version`, { encoding: 'utf-8' }).trim();
     console.log(`⚡ Itanna venv activated: ${venvPath} (${version})`);
+
+    // Ensure Jupyter kernel is registered
+    await ensureItannaKernel(pythonBin, verbose);
 
     venvActivated = true;
     return true;

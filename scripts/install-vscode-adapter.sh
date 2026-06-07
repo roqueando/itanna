@@ -53,6 +53,26 @@ check_deps() {
     ok "Node.js $node_ver, npm $npm_ver"
 }
 
+install_vscode_deps() {
+    if [ "$HAS_CODE" = false ]; then
+        warn "code CLI not found. Skipping VSCode extension installation."
+        return
+    fi
+    
+    info "Installing required VSCode extensions..."
+    
+    # Jupyter extension (core requirement for notebooks)
+    code --install-extension ms-toolsai.jupyter --force 2>&1 || true
+    code --install-extension ms-toolsai.jupyter-keymap --force 2>&1 || true
+    code --install-extension ms-toolsai.jupyter-renderers --force 2>&1 || true
+    
+    # Python
+    code --install-extension ms-python.python --force 2>&1 || true
+    code --install-extension ms-python.vscode-pylance --force 2>&1 || true
+    
+    ok "Required VSCode extensions installed"
+}
+
 install_deps() {
     info "Installing npm dependencies..."
     cd "$EXTENSION_DIR"
@@ -77,6 +97,34 @@ compile_extension() {
     
     npx tsc -p ./tsconfig.json
     ok "Extension compiled to $EXTENSION_DIR/out/"
+}
+
+install_jupyter_kernel() {
+    info "Setting up Jupyter kernel for Itanna venv..."
+    
+    local venv_python="$ITANNA_DIR/.venv/bin/python"
+    if [ ! -f "$venv_python" ]; then
+        warn "Itanna venv not found at $ITANNA_DIR/.venv"
+        warn "Run 'poetry install' first, then run this script again."
+        return 1
+    fi
+    
+    # Ensure ipykernel is installed
+    "$venv_python" -c "import ipykernel" 2>/dev/null || {
+        info "Installing ipykernel..."
+        "$venv_python" -m pip install ipykernel 2>&1 | tail -2
+    }
+    
+    # Register the Itanna kernel
+    local kernel_check
+    kernel_check=$("$venv_python" -m jupyter kernelspec list 2>/dev/null | grep "itanna " || echo "")
+    if [ -z "$kernel_check" ]; then
+        info "Registering Itanna Jupyter kernel..."
+        "$venv_python" -m ipykernel install --user --name itanna --display-name "Python 3 (Itanna)" 2>&1
+        ok "Jupyter kernel 'Python 3 (Itanna)' registered"
+    else
+        ok "Jupyter kernel already registered"
+    fi
 }
 
 install_extension() {
@@ -215,7 +263,12 @@ main() {
         compile_extension
     fi
     
+    install_vscode_deps
+    echo ""
     install_extension
+    echo ""
+    install_jupyter_kernel
+    echo ""
     show_instructions
 }
 

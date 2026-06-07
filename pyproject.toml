@@ -20,6 +20,8 @@ scipy = ">=1.10"
 matplotlib = ">=3.7"
 # Executable builder
 nuitka = ">=2.0"
+# Jupyter kernel (for VSCode Jupyter notebooks)
+ipykernel = ">=7.0"
 # Avoid building from source — these have pre-built wheels for macOS arm64
 contourpy = ">=1.3"
 kiwisolver = ">=1.4"
