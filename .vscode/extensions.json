@@ -1,0 +1,41 @@
+{
+  // ── Recommended Extensions for Itanna ─────────────────────────
+  // These are required or recommended for the full EE workflow.
+  // VSCode will prompt to install them when the workspace opens.
+  "recommendations": [
+    // Python & Jupyter (core)
+    "ms-python.python",
+    "ms-python.vscode-pylance",
+    "ms-toolsai.jupyter",
+    "ms-toolsai.jupyter-keymap",
+    "ms-toolsai.jupyter-renderers",
+
+    // Julia
+    "julialang.language-julia",
+
+    // C/C++
+    "ms-vscode.cpptools-extension-pack",
+    "twxs.cmake",
+    "ms-vscode.cmake-tools",
+
+    // Rust
+    "rust-lang.rust-analyzer",
+    "vadimcn.vscode-lldb",
+
+    // Tools & UI
+    "eamodio.gitlens",
+    "mhutchie.git-graph",
+    "EditorConfig.EditorConfig",
+    "tamasfe.even-better-toml",
+    "yzhang.markdown-all-in-one",
+    "bierner.markdown-mermaid",
+    "aaron-bond.better-comments",
+    "pkief.material-icon-theme",
+    "wayou.vscode-todo-highlight",
+    "streetsidesoftware.code-spell-checker",
+
+    // Itanna extension (packaged locally)
+    "itanna-vscode.itanna"
+  ],
+  "unwantedRecommendations": []
+}

@@ -26,6 +26,9 @@
      ;; Tools
      magit vterm
      ;; EE & notebooks
+     solarized-theme
+     tree-sitter
+     lsp-mode
      )
   "Packages required by the Itanna distribution.")
 
@@ -174,6 +177,7 @@
 (require 'julia-mode)
 (require 'rust-mode)
 (require 'cc-mode)
+(add-hook 'python-mode-hook (lambda () (font-lock-mode -1)))
 
 ;; ── LSP mode ────────────────────────────────────────────────────────────
 (use-package lsp-mode
@@ -196,6 +200,40 @@
 (setq dired-listing-switches "-lah")
 (setq dired-dwim-target t)
 (setq dired-hide-details-hide-symlink-targets nil)
+
+;; Python settings
+(setq python-shell-display-buffer-after-send nil)
+
+;; Display ALL Python buffers (*Python*, *Python-EE*, etc.) in a
+;; bottom side window so they never steal focus or replace the
+;; welcome screen.  The regex matches *Python*, *Python-EE*,
+;; *Python-something*, etc.
+;;
+;; The side window is preferred first; if it can't be created we
+;; fall back to reusing an existing window (but never the same one
+;; as the current buffer, thanks to `inhibit-same-window').
+(add-to-list 'display-buffer-alist
+             '("\\*Python[^*]*\\*"
+               (display-buffer-in-side-window
+                display-buffer-reuse-window
+                display-buffer-use-some-window)
+               (side . bottom)
+               (slot . 0)
+               (window-height . 0.25)
+               (inhibit-same-window . t)))
+
+;; Prevent python-mode (third-party) from auto-splitting windows
+;; or deleting other windows when a Python shell is created.
+(setq py-split-window-on-execute nil
+      py-switch-buffers-on-execute-p nil)
+
+;; Shackle: don't interfere with Python buffers at all — the
+;; display-buffer-alist rule above handles where they go.
+(use-package shackle
+  :ensure t
+  :config
+  (shackle-mode 1)
+  (setq shackle-rules '(("*Python" :regexp t :ignore t))))
 
 ;; ── Itanna-specific paths ───────────────────────────────────────────────
 (defconst itanna-root
@@ -224,3 +262,19 @@
 
 ;;; init.el ends here
 
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(package-selected-packages
+   '(company corfu counsel evil-collection evil-escape julia-mode
+             lsp-mode magit ob-rust org-superstar projectile
+             python-mode rust-mode shackle solarized-theme tree-sitter
+             vertico vterm)))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )

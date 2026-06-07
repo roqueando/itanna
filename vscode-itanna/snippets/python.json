@@ -1,0 +1,95 @@
+{
+  "Buck Converter Design": {
+    "prefix": "itanna-buck",
+    "body": [
+      "from electrical.converter.buck import design_buck",
+      "",
+      "# ── Buck converter design parameters ──",
+      "vin    = ${1:12}      # Input voltage (V)",
+      "vout   = ${2:3.3}     # Output voltage (V)",
+      "iout   = ${3:2.0}     # Output current (A)",
+      "fsw    = ${4:300e3} # Switching frequency (Hz)",
+      "vripple = ${5:0.01} # Output voltage ripple (V)",
+      "",
+      "# ── Run design calculation ──",
+      "results = design_buck(",
+      "    vin=vin, vout=vout, iout=iout,",
+      "    fsw=fsw, vripple=vripple,",
+      "    il_ripple_pct=${6:0.30},",
+      ")",
+      "",
+      "# ── Pretty-print results ──",
+      "print(\"─\" * 50)",
+      "print(\"  BUCK CONVERTER — Component Selection\")",
+      "print(\"─\" * 50)",
+      "for k, v in results.items():",
+      "    if isinstance(v, float):",
+      "        print(f\"  {k:25s}: {v:.4e}\")",
+      "    else:",
+      "        print(f\"  {k:25s}: {v}\")",
+      "print(\"─\" * 50)"
+    ],
+    "description": "Insert a buck converter design calculation snippet"
+  },
+  "Executable Builder": {
+    "prefix": "itanna-exec",
+    "body": [
+      "from electrical.executable.builder import build_app, tkinter_template",
+      "",
+      "# ── Define your application logic ──",
+      "def my_calculator():",
+      "    \"\"\"My EE calculator app\"\"\"",
+      "    import tkinter as tk",
+      "    from tkinter import ttk",
+      "",
+      "    root = tk.Tk()",
+      "    root.title(\"${1:EE Calculator}\")",
+      "",
+      "    frame = ttk.Frame(root, padding=\"20\")",
+      "    frame.pack(fill=\"both\", expand=True)",
+      "    ttk.Label(frame, text=\"${2:Hello from Itanna!}\",",
+      "             font=(\"Helvetica\", 16)).pack()",
+      "    ttk.Button(frame, text=\"Quit\",",
+      "              command=root.destroy).pack(pady=10)",
+      "",
+      "    root.mainloop()",
+      "",
+      "# ── Build standalone executable (requires Nuitka) ──",
+      "# build_app(",
+      "#     func=my_calculator,",
+      "#     name=\"${3:ee-calculator}\",",
+      "#     gui=\"tkinter\",",
+      "#     output_dir=\"~/Desktop/\"",
+      "# )"
+    ],
+    "description": "Insert an executable builder snippet"
+  },
+  "EE Imports": {
+    "prefix": "itanna-imports",
+    "body": [
+      "from electrical.converter.buck import design_buck",
+      "from electrical.converter import buck",
+      "from electrical.utils.plot import figure, show_plot",
+      "from electrical.utils.eseries import nearest_inductor, nearest_capacitor, nearest_value",
+      "",
+      "import numpy as np",
+      "import matplotlib.pyplot as plt"
+    ],
+    "description": "Insert common Itanna EE imports"
+  },
+  "Plot Template": {
+    "prefix": "itanna-plot",
+    "body": [
+      "from electrical.utils.plot import figure, show_plot",
+      "",
+      "figure(figsize=(${1:8}, ${2:4}))",
+      "plt.plot(${3:x}, ${4:y})",
+      "plt.xlabel(\"${5:x-label}\")",
+      "plt.ylabel(\"${6:y-label}\")",
+      "plt.title(\"${7:Title}\")",
+      "plt.grid(True)",
+      "show_plot()"
+    ],
+    "description": "Insert a matplotlib plot template using Itanna helpers"
+  }
+}

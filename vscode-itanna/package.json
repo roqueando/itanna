@@ -1,0 +1,246 @@
+{
+  "name": "itanna-vscode",
+  "displayName": "⚡ Itanna for VSCode",
+  "description": "Electrical Engineering distribution for VSCode — Jupyter notebooks, EE tools, and language integration for Python, Julia, C/C++, and Rust.",
+  "version": "0.1.0",
+  "publisher": "itanna-ee",
+  "license": "GPL-3.0-only",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/roqueando/itanna.git"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Notebooks",
+    "Programming Languages",
+    "Snippets",
+    "Education",
+    "Other"
+  ],
+  "keywords": [
+    "electrical engineering",
+    "jupyter",
+    "notebook",
+    "python",
+    "julia",
+    "rust",
+    "embedded"
+  ],
+  "icon": "resources/icon.png",
+  "activationEvents": [
+    "onStartupFinished",
+    "onLanguage:python",
+    "onLanguage:julia",
+    "onLanguage:rust",
+    "onLanguage:c",
+    "onLanguage:cpp",
+    "workspaceContains:**/pyproject.toml"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "itanna.showWelcome",
+        "title": "Itanna: Show Welcome Page"
+      },
+      {
+        "command": "itanna.newEENotebook",
+        "title": "Itanna: New EE Notebook"
+      },
+      {
+        "command": "itanna.newBuckCalculatorNotebook",
+        "title": "Itanna: New Buck Calculator Notebook"
+      },
+      {
+        "command": "itanna.newExecutableDemoNotebook",
+        "title": "Itanna: New Executable Builder Notebook"
+      },
+      {
+        "command": "itanna.insertBuckSnippet",
+        "title": "Itanna: Insert Buck Converter Snippet"
+      },
+      {
+        "command": "itanna.insertExecutableSnippet",
+        "title": "Itanna: Insert Executable Builder Snippet"
+      },
+      {
+        "command": "itanna.runEETests",
+        "title": "Itanna: Run EE Package Tests"
+      },
+      {
+        "command": "itanna.openEEPackage",
+        "title": "Itanna: Open EE Package Directory"
+      },
+      {
+        "command": "itanna.activateVenv",
+        "title": "Itanna: Activate Python Virtual Environment"
+      },
+      {
+        "command": "itanna.cargoCheck",
+        "title": "Itanna: Cargo Check"
+      },
+      {
+        "command": "itanna.cargoRun",
+        "title": "Itanna: Cargo Run"
+      },
+      {
+        "command": "itanna.cargoTest",
+        "title": "Itanna: Cargo Test"
+      },
+      {
+        "command": "itanna.cargoNewProject",
+        "title": "Itanna: New Cargo Project"
+      },
+      {
+        "command": "itanna.cmakeBuild",
+        "title": "Itanna: CMake Build"
+      },
+      {
+        "command": "itanna.setItannaRoot",
+        "title": "Itanna: Set Project Root Directory"
+      },
+      {
+        "command": "itanna.openTemplateNotebook",
+        "title": "Itanna: Open Template Notebook..."
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "itanna.showWelcome",
+        "key": "ctrl+alt+w",
+        "when": "editorFocus"
+      },
+      {
+        "command": "itanna.newEENotebook",
+        "key": "ctrl+alt+n",
+        "when": "editorFocus"
+      },
+      {
+        "command": "itanna.insertBuckSnippet",
+        "key": "ctrl+alt+b",
+        "when": "editorFocus && editorLangId == 'python'"
+      },
+      {
+        "command": "itanna.insertExecutableSnippet",
+        "key": "ctrl+alt+x",
+        "when": "editorFocus && editorLangId == 'python'"
+      },
+      {
+        "command": "itanna.runEETests",
+        "key": "ctrl+alt+t",
+        "when": "editorFocus"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "python",
+        "path": "./snippets/python.json"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "itanna.newEENotebook",
+          "group": "itanna",
+          "when": "!inputFocus"
+        },
+        {
+          "command": "itanna.runEETests",
+          "group": "itanna"
+        }
+      ],
+      "editor/title/context": [
+        {
+          "command": "itanna.insertBuckSnippet",
+          "group": "itanna",
+          "when": "editorLangId == 'python'"
+        },
+        {
+          "command": "itanna.insertExecutableSnippet",
+          "group": "itanna",
+          "when": "editorLangId == 'python'"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "itanna-sidebar",
+          "title": "Itanna EE",
+          "icon": "resources/icon-sidebar.svg"
+        }
+      ]
+    },
+    "views": {
+      "itanna-sidebar": [
+        {
+          "id": "itanna-tools",
+          "name": "EE Tools",
+          "icon": "resources/icon-tools.svg"
+        },
+        {
+          "id": "itanna-notebooks",
+          "name": "Notebooks",
+          "icon": "resources/icon-notebook.svg"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Itanna",
+      "properties": {
+        "itanna.venvPath": {
+          "type": "string",
+          "default": "${workspaceFolder}/.venv",
+          "description": "Path to the Python virtual environment"
+        },
+        "itanna.electricalPath": {
+          "type": "string",
+          "default": "${workspaceFolder}/electrical",
+          "description": "Path to the electrical engineering Python package"
+        },
+        "itanna.templatesPath": {
+          "type": "string",
+          "default": "${workspaceFolder}/templates-jupyter",
+          "description": "Path to Jupyter notebook templates"
+        },
+        "itanna.userNotebooksPath": {
+          "type": "string",
+          "default": "~/.itanna/notebooks",
+          "description": "Directory for user-created notebooks"
+        },
+        "itanna.autoActivateVenv": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically activate the Poetry virtual environment on workspace open"
+        },
+        "itanna.showWelcomeOnStartup": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show the welcome page when opening the workspace for the first time"
+        },
+        "itanna.projectRoot": {
+          "type": "string",
+          "default": "",
+          "description": "Path to the Itanna project root (e.g., /Users/roqueando/projects/itanna). If empty, auto-detected from ITANNA_ROOT env, common paths, or workspace folders."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./tsconfig.json",
+    "watch": "tsc -watch -p ./tsconfig.json",
+    "lint": "eslint src --ext ts"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "@vscode/vsce": "^3.9.2",
+    "eslint": "^8.56.0",
+    "typescript": "^5.3.0"
+  }
+}

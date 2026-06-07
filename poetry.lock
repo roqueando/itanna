@@ -335,7 +335,7 @@ files = [
 [[package]]
 name = "itanna-electrical"
 version = "0.1.0"
-description = "Electrical Engineering Python modules for the Itanna EE Emacs distribution"
+description = "Electrical Engineering Python modules for the Itanna Emacs distribution"
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
@@ -1021,4 +1021,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10"
-content-hash = "678953c56d723bb6f3d0388df9a30cbd76400255b1c7fb46b3b1e057cf9bf294"
+content-hash = "e99fb9b7e82cb44f60b1d9c2b7acd08e8fe9f6496d2f7570f87386be26f4e4b3"

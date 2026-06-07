@@ -1,0 +1,111 @@
+{
+  // ── Itanna VSCode Workspace Settings ──────────────────────────
+  // Shared settings for the Itanna Electrical Engineering workspace.
+  // These are applied when the workspace folder is opened in VSCode.
+
+  // ── Python ────────────────────────────────────────────────────
+  "python.defaultInterpreterPath": "/Users/roqueando/projects/itanna/.venv/bin/python",
+  "python.terminal.activateEnvironment": true,
+  "python.terminal.activateEnvInCurrentTerminal": true,
+  "python.envFile": "${workspaceFolder}/.env",
+  "python.analysis.autoImportCompletions": true,
+  "python.analysis.autoSearchPaths": true,
+  "python.analysis.extraPaths": [
+    "${workspaceFolder}",
+    "${workspaceFolder}/electrical",
+    "${workspaceFolder}/itanna"
+  ],
+  "python.analysis.typeCheckingMode": "basic",
+  "python.testing.pytestEnabled": true,
+  "python.testing.pytestPath": "${workspaceFolder}/.venv/bin/pytest",
+  "python.testing.cwd": "${workspaceFolder}/electrical",
+  "python.testing.autoTestDiscoverOnSaveEnabled": true,
+
+  // ── Jupyter ───────────────────────────────────────────────────
+  "jupyter.notebookFileRoot": "${workspaceFolder}",
+  "jupyter.askForKernelRestart": true,
+  "jupyter.allowImportFromNotebook": true,
+  "jupyter.alwaysTrustNotebooks": true,
+  "jupyter.widgetScriptSources": ["jsdelivr.com", "unpkg.com"],
+  "notebook.cellToolbarLocation": {
+    "default": "right"
+  },
+  "notebook.lineNumbers": "on",
+  "notebook.markup.fontSize": 14,
+  "notebook.codeFontSize": 13,
+  "notebook.output.fontSize": 13,
+
+  // ── Julia ─────────────────────────────────────────────────────
+  "julia.enableTelemetry": false,
+  "julia.usePlotPkg": true,
+  "julia.packageServer": "pkg.julialang.org",
+
+  // ── C/C++ ─────────────────────────────────────────────────────
+  "C_Cpp.default.compilerPath": "/usr/bin/clang++",
+  "C_Cpp.default.cStandard": "c17",
+  "C_Cpp.default.cppStandard": "c++20",
+  "C_Cpp.default.intelliSenseMode": "macos-clang-arm64",
+
+  // ── Rust ──────────────────────────────────────────────────────
+  "rust-analyzer.check.command": "clippy",
+  "rust-analyzer.cargo.allFeatures": true,
+  "rust-analyzer.linkedProjects": [],
+
+  // ── Editor ────────────────────────────────────────────────────
+  "editor.fontFamily": "'CodeNewRoman Nerd Font Mono', 'JetBrains Mono', 'Fira Code', Menlo, Monaco, monospace",
+  "editor.fontSize": 14,
+  "editor.lineHeight": 1.6,
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "editor.renderWhitespace": "boundary",
+  "editor.rulers": [80, 100],
+  "editor.bracketPairColorization.enabled": true,
+  "editor.minimap.enabled": false,
+  "editor.multiCursorModifier": "alt",
+  "editor.suggestSelection": "first",
+  "editor.semanticHighlighting.enabled": true,
+  "editor.fontLigatures": true,
+  "editor.cursorBlinking": "smooth",
+  "editor.cursorSmoothCaretAnimation": "on",
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": "explicit"
+  },
+
+  // ── Files ─────────────────────────────────────────────────────
+  "files.autoSave": "onFocusChange",
+  "files.exclude": {
+    "**/.git": true,
+    "**/__pycache__": true,
+    "**/*.pyc": true,
+    "**/.mypy_cache": true,
+    "**/.pytest_cache": true,
+    "**/.venv": false,
+    "**/node_modules": true,
+    "**/*.egg-info": true
+  },
+
+  // ── Terminal ──────────────────────────────────────────────────
+  "terminal.integrated.defaultProfile.osx": "zsh",
+  "terminal.integrated.fontFamily": "'CodeNewRoman Nerd Font Mono', 'JetBrains Mono', monospace",
+  "terminal.integrated.fontSize": 13,
+  "terminal.integrated.shellIntegration.enabled": true,
+
+  // ── Workbench ─────────────────────────────────────────────────
+  "workbench.colorTheme": "Solarized Light",
+  "workbench.iconTheme": "material-icon-theme",
+  "workbench.startupEditor": "none",
+  "workbench.tree.indent": 20,
+  "window.title": "⚡ Itanna: ${rootName}${separator}${activeEditorShort}",
+
+  // ── Extensions ────────────────────────────────────────────────
+  "extensions.ignoreRecommendations": false,
+
+  // ── Itanna-specific ───────────────────────────────────────────
+  "itanna.venvPath": "${workspaceFolder}/.venv",
+  "itanna.electricalPath": "${workspaceFolder}/electrical",
+  "itanna.templatesPath": "${workspaceFolder}/templates-jupyter",
+  "itanna.userNotebooksPath": "${userHome}/.itanna/notebooks",
+  "itanna.autoActivateVenv": true,
+  "itanna.showWelcomeOnStartup": true
+}

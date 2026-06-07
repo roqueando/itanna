@@ -1,0 +1,124 @@
+{
+  // ── Itanna Tasks ──────────────────────────────────────────────
+  // Build, test, and run tasks for the EE workflow.
+  "version": "2.0.0",
+  "tasks": [
+    // ── Python EE Tests ─────────────────────────────────────────
+    {
+      "label": "Itanna: Run EE Tests",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/bin/python -m pytest",
+      "args": [
+        "${workspaceFolder}/electrical/tests",
+        "-v",
+        "--tb=short"
+      ],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "dedicated",
+        "showReuseMessage": false
+      },
+      "problemMatcher": []
+    },
+    // ── Rust: Cargo Check ───────────────────────────────────────
+    {
+      "label": "Itanna: Cargo Check",
+      "type": "shell",
+      "command": "cargo check",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": ["$rustc"]
+    },
+    // ── Rust: Cargo Run ─────────────────────────────────────────
+    {
+      "label": "Itanna: Cargo Run",
+      "type": "shell",
+      "command": "cargo run",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    // ── Rust: Cargo Test ────────────────────────────────────────
+    {
+      "label": "Itanna: Cargo Test",
+      "type": "shell",
+      "command": "cargo test",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": ["$rustc"]
+    },
+    // ── Rust: New Cargo Project ─────────────────────────────────
+    {
+      "label": "Itanna: New Cargo Project",
+      "type": "shell",
+      "command": "cargo new --bin ${input:cargoProjectName}",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    // ── CMake: Build ────────────────────────────────────────────
+    {
+      "label": "Itanna: CMake Build",
+      "type": "shell",
+      "command": "mkdir -p build && cd build && cmake .. && make -j$(sysctl -n hw.ncpu)",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": ["$gcc"]
+    },
+    // ── Install Python Dependencies ─────────────────────────────
+    {
+      "label": "Itanna: Install Python Dependencies",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/bin/pip install -e . -e ./electrical",
+      "group": "none",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    }
+  ],
+  "inputs": [
+    {
+      "id": "cargoProjectName",
+      "type": "promptString",
+      "description": "Enter the Cargo project name",
+      "default": "itanna-ee-crate"
+    }
+  ]
+}

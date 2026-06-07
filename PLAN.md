@@ -118,3 +118,76 @@ An Emacs distribution focused on Electrical Engineering, built on top of the exi
 6. **Naming**: Is "Ayedero EE" / "Itanna" a good name, or do you have another name in mind?
 
 7. **Should the `electrical` Python package be a separate Git repo** (pip-installable) or bundled inside the Emacs distribution?
+
+## VSCode + Jupyter Adapter
+
+**Status: In progress** — see `VSCODE-PLAN.md` for full plan
+
+An adapter that ports the Itanna experience to VSCode + Jupyter notebooks.
+
+### Files Created
+
+```
+.vscode/
+├── extensions.json        # Recommended VSCode extensions
+├── settings.json          # Workspace settings
+└── tasks.json             # Build/test/run tasks
+
+vscode-itanna/             # VSCode extension
+├── package.json           # Extension manifest
+├── tsconfig.json          # TypeScript config
+├── README.md              # Extension documentation
+├── src/
+│   ├── extension.ts       # Extension entry point
+│   ├── commands.ts        # All command registrations
+│   ├── venv.ts            # Virtual env detection & activation
+│   ├── templates.ts       # Notebook template management
+│   ├── snippets.ts        # Programmatic snippet insertion
+│   ├── welcome.ts         # Welcome page webview
+│   ├── treeView.ts        # Sidebar tree views
+│   ├── status.ts          # Status bar indicators
+│   └── testRunner.ts      # EE test runner
+├── snippets/
+│   └── python.json        # Python code snippets
+└── resources/
+    ├── icon-sidebar.svg
+    ├── icon-tools.svg
+    └── icon-notebook.svg
+
+templates-jupyter/         # Jupyter notebook templates
+├── template-ee.ipynb      # Blank EE notebook
+├── buck-calculator.ipynb  # Buck converter design
+└── hello-executable.ipynb # Executable builder demo
+
+scripts/
+└── install-vscode-adapter.sh  # Install script
+```
+
+### Key Mappings
+
+| Emacs Org-babel               | VSCode + Jupyter                |
+|-------------------------------|----------------------------------|
+| `; o e` Execute block         | `Shift+Enter`                    |
+| `; o N` New notebook          | `Ctrl+Alt+N`                     |
+| `; E b` Insert buck calc      | `Ctrl+Alt+B` or snippet          |
+| `; E x` Insert exec builder   | `Ctrl+Alt+X` or snippet          |
+| `; E t` Run tests             | `Ctrl+Alt+T`                     |
+| `; h` Welcome page            | `Ctrl+Alt+W` (webview)           |
+| `; V` Activate venv           | Auto-activate + status bar       |
+| `; R c` / `; R r` / `; R t`  | Tasks: Cargo Check/Run/Test      |
+| `; M b` CMake build           | Task: CMake Build                |
+
+### To Install & Use
+
+```bash
+# Install npm deps and compile
+./scripts/install-vscode-adapter.sh
+
+# Or just compile (after manual npm install)
+cd vscode-itanna && npm install && npm run compile
+
+# Open workspace in VSCode
+code .
+```
+
+Then press `Ctrl+Alt+W` for the welcome page or `Ctrl+Alt+N` for a new notebook.

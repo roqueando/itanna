@@ -1,0 +1,9 @@
+# Itanna VSCode Extension — files to exclude from VSIX
+.vscode/**
+src/**
+tsconfig.json
+.gitignore
+node_modules/**
+.git/**
+**/tsconfig.tsbuildinfo
+**/*.map
