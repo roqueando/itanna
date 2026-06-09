@@ -18,6 +18,9 @@ itanna-electrical = { path = "electrical", develop = true }
 numpy = ">=1.24"
 scipy = ">=1.10"
 matplotlib = ">=3.7"
+pandas = ">=2.0"
+# SI-prefixed number formatting (Float(value):.2h)
+prefixed = ">=0.7"
 # Executable builder
 nuitka = ">=2.0"
 # Jupyter kernel (for VSCode Jupyter notebooks)

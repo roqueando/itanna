@@ -37,12 +37,20 @@ from dataclasses import dataclass, field, asdict
 from typing import Optional
 import math
 
-from electrical.utils.prefixed import pp, p, to_table_row
+from electrical.utils.prefixed import pp, p, to_table_row, si_scale
 from electrical.utils.eseries import (
     nearest_value as nearest_standard,
     nearest_inductor,
     nearest_capacitor,
 )
+
+# Prefixed package for Float(value):.2h formatting
+_has_prefixed = False
+try:
+    from prefixed import Float as PrefixedFloat
+    _has_prefixed = True
+except ImportError:
+    PrefixedFloat = None
 
 
 # ── Buck converter design ────────────────────────────────────────────────
@@ -144,26 +152,33 @@ class BuckSpecification:
         self.diode_current = i_diode_avg
         return self
 
+    def _fmt(self, value: float, unit: str = "") -> str:
+        """Format a value with SI prefix, using prefixed package if available."""
+        if _has_prefixed:
+            return f"{PrefixedFloat(value):.2h}{unit}"
+        return pp(value, unit)
+
     def summary(self) -> str:
         """Return a human-readable summary string with SI-prefixed values."""
+        _ = self._fmt
         lines = [
             "═" * 55,
             "  Buck Converter Design Summary",
             "═" * 55,
-            f"  Vin = {pp(self.vin_nom, 'V')}  ({pp(self.vin_min or self.vin_nom*0.9, 'V')} – {pp(self.vin_max or self.vin_nom*1.1, 'V')})",
-            f"  Vout = {pp(self.vout, 'V')}  @  {pp(self.iout_max, 'A')}  (max)",
-            f"  Fsw = {pp(self.fsw, 'Hz')}",
-            f"  Vripple(max) = {pp(self.vripple_max, 'V')}",
+            f"  Vin = {_(self.vin_nom, 'V')}  ({_(self.vin_min or self.vin_nom*0.9, 'V')} – {_(self.vin_max or self.vin_nom*1.1, 'V')})",
+            f"  Vout = {_(self.vout, 'V')}  @  {_(self.iout_max, 'A')}  (max)",
+            f"  Fsw = {_(self.fsw, 'Hz')}",
+            f"  Vripple(max) = {_(self.vripple_max, 'V')}",
             "─" * 55,
             f"  Duty cycle (nom)      : {self.duty*100:.1f} %",
-            f"  Inductor              : {pp(self.inductor, 'H')}  (ΔIL = {pp(self.inductor_ripple, 'A')}, peak = {pp(self.inductor_peak, 'A')})",
-            f"  Output capacitor      : {pp(self.output_cap, 'F')}  (ESR ≤ {pp(self.output_cap_esr, 'Ω')})",
-            f"  Input capacitor       : {pp(self.input_cap, 'F')}",
+            f"  Inductor              : {_(self.inductor, 'H')}  (ΔIL = {_(self.inductor_ripple, 'A')}, peak = {_(self.inductor_peak, 'A')})",
+            f"  Output capacitor      : {_(self.output_cap, 'F')}  (ESR ≤ {_(self.output_cap_esr, 'Ω')})",
+            f"  Input capacitor       : {_(self.input_cap, 'F')}",
             "─" * 55,
-            f"  MOSFET Vds(max)       : {pp(self.mosfet_voltage, 'V')}",
-            f"  MOSFET Irms           : {pp(self.mosfet_current, 'A')}",
-            f"  Diode Vrrm            : {pp(self.diode_voltage, 'V')}",
-            f"  Diode Iavg            : {pp(self.diode_current, 'A')}",
+            f"  MOSFET Vds(max)       : {_(self.mosfet_voltage, 'V')}",
+            f"  MOSFET Irms           : {_(self.mosfet_current, 'A')}",
+            f"  Diode Vrrm            : {_(self.diode_voltage, 'V')}",
+            f"  Diode Iavg            : {_(self.diode_current, 'A')}",
             "═" * 55,
         ]
         return "\n".join(lines)
@@ -193,6 +208,99 @@ class BuckSpecification:
             to_table_row("Diode Iavg", self.diode_current, "A"),
         ]
 
+    def to_dataframe(self):
+        """Return results as a pandas DataFrame for Jupyter display.
+
+        Returns a DataFrame with columns [Parameter, Value, Unit],
+        where Value uses SI prefixes (e.g. 15.0, 2.2) and Unit has
+        the prefix combined (e.g. µH, mA, kHz).
+
+        If pandas is not installed, falls back to a list of tuples.
+        """
+        table = self.to_table()
+        try:
+            import pandas as pd
+            return pd.DataFrame(table, columns=["Parameter", "Value", "Unit"])
+        except ImportError:
+            return table
+
+    def _repr_html_(self) -> str:
+        """Render as an HTML table for Jupyter notebook display.
+
+        Uses the `prefixed` package (Float(value):.2h) for SI-prefixed
+        value formatting when available, otherwise falls back to the
+        built-in `electrical.utils.prefixed` module.
+        """
+        rows_html = ""
+        for row in self._prefixed_table():
+            rows_html += f"<tr><td>{row[0]}</td><td style='text-align:right'>{row[1]}</td><td style='text-align:left'>{row[2]}</td></tr>\n"
+
+        # Format the input summary line
+        if _has_prefixed:
+            vin_s = f"{PrefixedFloat(self.vin_nom):.2h}V"
+            vout_s = f"{PrefixedFloat(self.vout):.2h}V"
+            iout_s = f"{PrefixedFloat(self.iout_max):.2h}A"
+            fsw_s = f"{PrefixedFloat(self.fsw):.2h}Hz"
+            vrip_s = f"{PrefixedFloat(self.vripple_max):.2h}V"
+        else:
+            vin_s = pp(self.vin_nom, 'V')
+            vout_s = pp(self.vout, 'V')
+            iout_s = pp(self.iout_max, 'A')
+            fsw_s = pp(self.fsw, 'Hz')
+            vrip_s = pp(self.vripple_max, 'V')
+
+        return f"""
+<div style="font-family: 'DejaVu Sans', sans-serif; margin: 10px 0;">
+  <h4 style="color: #b58900; margin-bottom: 8px;">⚡ Buck Converter Design</h4>
+  <table style="border-collapse: collapse; width: auto;">
+    <thead>
+      <tr style="background: #eee8d5;">
+        <th style="padding: 6px 12px; text-align: left; border-bottom: 2px solid #b58900;">Parameter</th>
+        <th style="padding: 6px 12px; text-align: right; border-bottom: 2px solid #b58900;">Value</th>
+        <th style="padding: 6px 12px; text-align: left; border-bottom: 2px solid #b58900;">Unit</th>
+      </tr>
+    </thead>
+    <tbody>
+{rows_html}    </tbody>
+  </table>
+  <p style="color: #657b83; font-size: 0.85em; margin-top: 4px;">
+    {vin_s} → {vout_s} @ {iout_s} |
+    Fsw = {fsw_s} |
+    Vripple ≤ {vrip_s}
+  </p>
+</div>"""
+
+    def _prefixed_table(self) -> list:
+        """Return results as [name, formatted_value, unit] using prefixed package."""
+        if _has_prefixed:
+            def fmt(val, unit):
+                return [f"{PrefixedFloat(val):.2h}{unit}"]
+            rows = [
+                ["Duty cycle", f"{self.duty*100:.1f}", "%"],
+                ["Inductor", f"{PrefixedFloat(self.inductor):.2h}", "H"],
+                ["Inductor ripple", f"{PrefixedFloat(self.inductor_ripple):.2h}", "A"],
+                ["Inductor peak", f"{PrefixedFloat(self.inductor_peak):.2h}", "A"],
+                ["Output capacitor", f"{PrefixedFloat(self.output_cap):.2h}", "F"],
+                ["Input capacitor", f"{PrefixedFloat(self.input_cap):.2h}", "F"],
+                ["MOSFET Vds", f"{PrefixedFloat(self.mosfet_voltage):.2h}", "V"],
+                ["MOSFET Irms", f"{PrefixedFloat(self.mosfet_current):.2h}", "A"],
+                ["Diode Vrrm", f"{PrefixedFloat(self.diode_voltage):.2h}", "V"],
+                ["Diode Iavg", f"{PrefixedFloat(self.diode_current):.2h}", "A"],
+            ]
+            return rows
+        else:
+            return self.to_table()
+
+    def __str__(self) -> str:
+        """Pretty-print with SI prefixes, suitable for `print()`."""
+        return self.summary()
+
+    def __repr__(self) -> str:
+        return (
+            f"BuckSpecification(vin={self.vin_nom}, vout={self.vout}, "
+            f"iout={self.iout_max}, fsw={self.fsw}, vripple={self.vripple_max})"
+        )
+
 
 def design_buck(
     vin: float,
@@ -206,9 +314,13 @@ def design_buck(
     diode_vf: float = 0.7,
     mosfet_rdson: float = 0.020,
     esr_cap: float = 0.005,
-    as_dict: bool = True,
+    as_dict: bool = False,
+    as_dataframe: bool = False,
 ):
-    """Convenience function to design a buck converter.
+    """Design a buck converter and return results in a convenient format.
+
+    The default return is a `BuckSpecification` object that renders as
+    a pretty HTML table in Jupyter notebooks (via `_repr_html_`).
 
     Args:
         vin: Nominal input voltage (V)
@@ -222,10 +334,19 @@ def design_buck(
         diode_vf: Diode forward voltage drop (default 0.7V)
         mosfet_rdson: MOSFET on-resistance (default 20mΩ)
         esr_cap: Output capacitor ESR estimate (default 5mΩ)
-        as_dict: If True, return dict; if False, return BuckSpecification
+        as_dict: If True, return a plain dict instead of BuckSpecification
+        as_dataframe: If True, return a pandas DataFrame (requires pandas)
 
     Returns:
-        Dict or BuckSpecification with all computed values.
+        BuckSpecification, dict, or pandas DataFrame with results.
+
+    Jupyter usage:
+        results = design_buck(12, 3.3, 2, 300e3, 0.01)
+        results  # renders as a pretty HTML table
+
+        # Or as a DataFrame:
+        df = design_buck(12, 3.3, 2, 300e3, 0.01, as_dataframe=True)
+        df
     """
     spec = BuckSpecification(
         vin_nom=vin, vout=vout, iout_max=iout,
@@ -238,4 +359,6 @@ def design_buck(
     spec.design()
     if as_dict:
         return asdict(spec)
+    if as_dataframe:
+        return spec.to_dataframe()
     return spec

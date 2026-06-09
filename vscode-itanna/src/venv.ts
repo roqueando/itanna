@@ -10,12 +10,18 @@ import { execSync, exec } from 'child_process';
 let venvActivated = false;
 
 /**
- * Find the Poetry virtual environment path for the Itanna project.
+ * Find the Itanna VSCode virtual environment path.
  *
- * Checks in order:
+ * Priority:
  * 1. VIRTUAL_ENV environment variable
- * 2. `.venv/` inside the workspace root
- * 3. Poetry's cache directory
+ * 2. `~/.itanna/.venv/` (dedicated VSCode environment)
+ * 3. `.venv/` inside workspace root
+ * 4. Poetry's cache directory
+ *
+ * The dedicated VSCode venv at `~/.itanna/.venv` is preferred because:
+ * - It's independent of the Emacs/org-babel venv
+ * - It persists regardless of which directory VSCode is opened in
+ * - It's managed by the VSCode extension install script
  */
 export async function findVenvPath(workspaceRoot: string): Promise<string | null> {
   // 1. Already activated in shell
@@ -24,14 +30,23 @@ export async function findVenvPath(workspaceRoot: string): Promise<string | null
     return envVar;
   }
 
-  // 2. In-project venv
+  // 2. Dedicated VSCode venv at ~/.itanna/.venv (highest priority for VSCode)
+  const home = process.env.HOME || process.env.USERPROFILE || '';
+  const itannaDir = path.join(home, '.itanna');
+  const itannaVenv = path.join(itannaDir, '.venv');
+  const itannaPython = path.join(itannaVenv, 'bin', 'python');
+  if (fs.existsSync(itannaPython)) {
+    return itannaVenv;
+  }
+
+  // 3. In-project venv (shared with Emacs)
   const inProjectVenv = path.join(workspaceRoot, '.venv');
   const inProjectPython = path.join(inProjectVenv, 'bin', 'python');
   if (fs.existsSync(inProjectPython)) {
     return inProjectVenv;
   }
 
-  // 3. Poetry cache (async)
+  // 4. Poetry cache (async)
   try {
     const poetryPath = await execAsync('poetry', ['env', 'info', '--path'], { cwd: workspaceRoot });
     const cachePath = poetryPath.trim();
@@ -97,28 +112,42 @@ async function ensureItannaKernel(pythonBin: string, verbose: boolean): Promise<
 
 /**
  * Derive the Itanna project root from a venv path.
- * The venv is typically at <itanna-root>/.venv/
+ *
+ * The venv can be at:
+ *   - <itanna-project>/.venv/          (project-local)
+ *   - ~/.itanna/.venv/                 (dedicated VSCode venv)
+ *
+ * In the second case, the itanna project root is still the original
+ * project directory (e.g., ~/projects/itanna/).
  */
 function deriveItannaRoot(venvPath: string): string | undefined {
   const parent = path.resolve(venvPath, '..');
-  // Check if parent is the project root (has pyproject.toml + templates-jupyter)
+
+  // Case 1: parent is the project root (project-local venv)
   if (
     fs.existsSync(path.join(parent, 'pyproject.toml')) &&
     fs.existsSync(path.join(parent, 'templates-jupyter'))
   ) {
     return parent;
   }
-  // Try common locations relative to the venv
+
+  // Case 2: parent is ~/.itanna (dedicated VSCode venv)
+  // Look for the actual project root in common locations
   const home = process.env.HOME || '';
   const commonRoots = [
     path.join(home, 'projects', 'itanna'),
     path.join(home, 'itanna'),
+    path.join(home, 'src', 'itanna'),
   ];
   for (const root of commonRoots) {
-    if (fs.existsSync(path.join(root, '.venv', 'bin', 'python'))) {
+    if (
+      fs.existsSync(path.join(root, 'pyproject.toml')) &&
+      fs.existsSync(path.join(root, 'templates-jupyter'))
+    ) {
       return root;
     }
   }
+
   return undefined;
 }
 

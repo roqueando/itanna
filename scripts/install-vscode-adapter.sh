@@ -99,13 +99,54 @@ compile_extension() {
     ok "Extension compiled to $EXTENSION_DIR/out/"
 }
 
+install_vscode_venv() {
+    info "Setting up dedicated VSCode virtual environment at ~/.itanna/.venv ..."
+
+    local itanna_user_dir="$HOME/.itanna"
+    local venv_dir="$itanna_user_dir/.venv"
+    local venv_python="$venv_dir/bin/python"
+
+    mkdir -p "$itanna_user_dir"
+    mkdir -p "$itanna_user_dir/notebooks"
+
+    if [ -f "$venv_python" ]; then
+        # Venv already exists — upgrade pip and itanna packages
+        info "Upgrading existing venv at $venv_dir ..."
+        "$venv_python" -m pip install --upgrade pip 2>&1 | tail -1
+    else
+        # Create new venv
+        info "Creating new Python venv at $venv_dir ..."
+        python3 -m venv "$venv_dir" 2>&1 || {
+            err "Failed to create venv. Is python3 installed?"
+            return 1
+        }
+        ok "Virtual environment created"
+    fi
+
+    # Install core dependencies
+    info "Installing core Python packages (numpy, scipy, matplotlib, pandas, prefixed, ipykernel)..."
+    "$venv_python" -m pip install --upgrade pip 2>&1 | tail -1
+    "$venv_python" -m pip install numpy scipy matplotlib pandas prefixed ipykernel 2>&1 | tail -2
+
+    # Install the local itanna packages in development mode
+    info "Installing itanna and itanna-electrical packages..."
+    "$venv_python" -m pip install -e "$ITANNA_DIR" 2>&1 | tail -1
+    "$venv_python" -m pip install -e "$ITANNA_DIR/electrical" 2>&1 | tail -1
+
+    # Create a marker file so the extension knows which project root this venv belongs to
+    echo "$ITANNA_DIR" > "$itanna_user_dir/project_root.txt"
+
+    ok "VSCode venv ready at $venv_dir"
+}
+
 install_jupyter_kernel() {
     info "Setting up Jupyter kernel for Itanna venv..."
     
-    local venv_python="$ITANNA_DIR/.venv/bin/python"
+    local venv_python="$HOME/.itanna/.venv/bin/python"
+    
     if [ ! -f "$venv_python" ]; then
-        warn "Itanna venv not found at $ITANNA_DIR/.venv"
-        warn "Run 'poetry install' first, then run this script again."
+        warn "VSCode venv not found at $HOME/.itanna/.venv"
+        warn "Run './scripts/install-vscode-adapter.sh' first to create it."
         return 1
     fi
     
@@ -266,6 +307,8 @@ main() {
     install_vscode_deps
     echo ""
     install_extension
+    echo ""
+    install_vscode_venv
     echo ""
     install_jupyter_kernel
     echo ""

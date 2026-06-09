@@ -4,7 +4,7 @@
   // These are applied when the workspace folder is opened in VSCode.
 
   // ── Python ────────────────────────────────────────────────────
-  "python.defaultInterpreterPath": "/Users/roqueando/projects/itanna/.venv/bin/python",
+  "python.defaultInterpreterPath": "/Users/roqueando/.itanna/.venv/bin/python",
   "python.terminal.activateEnvironment": true,
   "python.terminal.activateEnvInCurrentTerminal": true,
   "python.envFile": "${workspaceFolder}/.env",

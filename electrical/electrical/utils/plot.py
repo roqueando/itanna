@@ -2,44 +2,99 @@
 Plotting Utilities for Itanna
 ==============================
 
-Matplotlib configuration for inline plotting in org-babel.
+Matplotlib utilities for engineering plots in Jupyter notebooks
+and org-babel (Emacs).
 
-By default, matplotlib tries to open interactive windows.
-This module configures it to output inline PNG/SVG images
-that org-babel can capture and display in the buffer.
+No automatic backend configuration — the environment (Jupyter, Emacs, or
+script) is responsible for setting the matplotlib backend. This prevents
+import-time hangs and conflicts.
 
-Usage in org-babel:
+For Jupyter, run this once per session:
+    %matplotlib inline
+
+Usage in Jupyter (VSCode):
+    %matplotlib inline
+    from electrical.utils.plot import figure, show_plot, plot_signals
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    t = np.linspace(0, 1e-5, 100)
+    figure(figsize=(8, 4))
+    plt.plot(t, np.sin(2e6 * t))
+    show_plot()
+
+Usage in org-babel (Emacs):
     #+begin_src python :results value file :session *Python-EE* :exports both
     from electrical.utils.plot import figure, show_plot
-    import matplotlib.pyplot as plt
 
     figure(figsize=(8, 4))
     plt.plot([1, 2, 3], [1, 4, 9])
-    plt.title("Example Plot")
     show_plot()
     #+end_src
-
-The magic is:
-  - :results value file  → captures the return value (filename)
-                           and wraps it in [[file:...]] for inline display
-  - show_plot()          → saves the plot to a file (no window) and
-                           returns the filename for org-babel to display
-  - No X11/display needed → uses matplotlib Agg backend
 """
 
 import io
 import os
 import sys
+import warnings
 from contextlib import contextmanager
 from pathlib import Path
+from typing import Optional, List, Dict, Any
 
-# ── Agg backend: no X11/display needed ───────────────────────────────────
-# This must be set before importing matplotlib.pyplot
+# ── Import matplotlib without setting backend ───────────────────────────
+# The backend is configured by the environment (Jupyter inline, Emacs org-babel,
+# or script). We do NOT set it here to avoid kernel hangs and import-time
+# conflicts. See `setup_jupyter()` and `setup_script()` below for explicit setup.
 import matplotlib
-matplotlib.use("Agg")
-
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
+import numpy as np
+
+# ── Environment detection (safe, no magic) ──────────────────────────────
+_IN_JUPYTER = False
+try:
+    _ip = get_ipython()  # type: ignore[name-defined]
+    if _ip and hasattr(_ip, "kernel"):
+        _IN_JUPYTER = True
+except NameError:
+    pass
+
+# ── Explicit setup functions ────────────────────────────────────────────
+
+def setup_jupyter():
+    """Configure matplotlib for Jupyter inline display.
+
+    Call this once at the top of your Jupyter notebook if you haven't
+    already used the %matplotlib inline magic.
+
+    Sets the backend to 'inline' so plots render in notebook cells.
+    """
+    try:
+        ip = get_ipython()  # type: ignore[name-defined]
+        if ip is not None:
+            ip.run_line_magic("matplotlib", "inline")
+    except (ImportError, AttributeError, NameError):
+        pass
+
+
+def setup_script():
+    """Configure matplotlib for non-interactive script usage.
+
+    Uses the Agg (anti-grain geometry) backend which does not require
+    a display server. Use this for org-babel or headless scripts.
+
+    Suppresses the harmless "non-interactive" warning from plt.show().
+    """
+    matplotlib.use("Agg")
+    warnings.filterwarnings("ignore", message=".*non-interactive.*cannot be shown.*")
+
+
+# ── Auto-setup for non-Jupyter environments ────────────────────────────
+# In org-babel or plain scripts, default to Agg backend so plots can be
+# saved to files without a display server. In Jupyter, the user is
+# responsible for calling %matplotlib inline or setup_jupyter().
+if not _IN_JUPYTER:
+    setup_script()
 
 
 # ── Global counter for auto-named plots ──────────────────────────────────
@@ -110,43 +165,54 @@ def figure(figsize=None):
     plt.figure(figsize=figsize)
 
 
-def show_plot(filename=None, dpi=100, format="png", output_dir=None):
-    """Save the current plot to a file and return the absolute filename.
+def show_plot(filename: Optional[str] = None, dpi: int = 100,
+              format: str = "png", output_dir: Optional[str] = None) -> Optional[str]:
+    """Save the current plot to a file and/or display it.
 
-    This replaces plt.show(). Saves the figure and returns the absolute path.
-    Intended for org-babel with :results value — the return value becomes
-    the block result, and org-babel handles the [[file:...]] wrapping.
+    Behaviour depends on the environment:
 
-    Use the return value as the last expression in your code block:
+    - **Jupyter**: If `%matplotlib inline` was set, the figure is already
+      displayed by Jupyter when the cell finishes. This function saves
+      the plot to a file if `filename` is given. Returns the filename or None.
 
+    - **org-babel (Emacs)**: Saves the figure to a file and returns the
+      absolute path (auto-generates a name if none given). The return
+      value becomes the block result for inline display.
+
+    - **Script (Agg backend)**: Saves to file and returns the path.
+
+    Usage:
         figure()
-        plt.plot(x, y)
-        show_plot('myplot.png')   # ← last expression, value is returned
-
-    The output directory is determined by (in priority order):
-      1. The `output_dir` parameter
-      2. The ITANNA_PLOT_DIR environment variable (set automatically by
-         the Itanna Emacs distribution before block execution)
-      3. Current working directory
+        plt.plot(t, y)
+        show_plot()              # auto-name in org-babel, display in Jupyter
+        show_plot("plot.png")    # specify filename
 
     Args:
-        filename: Output filename (auto-generated if None).
-                  Use .png extension for inline display in org.
-        dpi: Resolution in dots per inch
-        format: Image format ("png", "svg", "pdf")
-        output_dir: Output directory (default: ITANNA_PLOT_DIR env var or CWD)
+        filename: Output filename (auto-generated if None in non-Jupyter mode).
+        dpi: Resolution in dots per inch.
+        format: Image format ("png", "svg", "pdf").
+        output_dir: Output directory (default: ITANNA_PLOT_DIR env or CWD).
 
     Returns:
-        Absolute path like "/path/to/notebook/itanna-plot-001.png"
-        (no [[file:...]] wrapping — org-babel adds that)
+        Absolute path to saved file, or None if nothing was saved.
     """
     outdir = output_dir or _plot_output_dir()
+
+    # Determine filename
+    fname: Optional[str] = None
     if filename:
         fname = os.path.join(outdir, filename)
-    else:
+    elif not _IN_JUPYTER:
+        # In org-babel/script, auto-generate a name
         fname = _next_filename(format, output_dir=outdir)
-    plt.savefig(fname, dpi=dpi, format=format, bbox_inches="tight")
+
+    # Save to file if we have a name
+    if fname:
+        plt.savefig(fname, dpi=dpi, format=format, bbox_inches="tight")
+
+    # Close the figure
     plt.close()
+
     return fname
 
 
@@ -159,6 +225,138 @@ def subplots(*args, **kwargs):
         show_plot()
     """
     return plt.subplots(*args, **kwargs)
+
+
+# ── Flexible Multi-Signal Plotting ─────────────────────────────────────
+
+def plot_signals(
+    t: np.ndarray,
+    signals: List[Dict[str, Any]],
+    title: str = "",
+    xlabel: str = "Time (s)",
+    figsize: tuple = (10, 6),
+    filename: Optional[str] = None,
+    output_dir: Optional[str] = None,
+    dpi: int = 100,
+    format: str = "png",
+    grid: bool = True,
+    legend: bool = True,
+    **kwargs
+) -> Optional[str]:
+    """Plot multiple signals against a common time axis.
+
+    Creates a matplotlib figure with each signal on its own subplot
+    (stacked vertically), sharing the same time axis.
+
+    Parameters
+    ----------
+    t : np.ndarray
+        Common time array (s).
+    signals : list of dict
+        Each dict describes one signal:
+
+        .. code-block:: python
+
+            {
+                "name": "Inductor Current",     # legend label
+                "values": i_l,                  # array of values
+                "ylabel": "Current (A)",        # y-axis label
+                "color": "#268bd2",            # optional, matplotlib color
+                "linestyle": "-",              # optional
+                "linewidth": 2,                # optional
+                "alpha": 1.0,                  # optional
+            }
+
+    title : str, optional
+        Overall figure title.
+    xlabel : str, optional
+        X-axis label (default "Time (s)").
+    figsize : tuple, optional
+        Figure size (width, height) in inches (default (10, 6)).
+    filename : str, optional
+        Save to this filename. Auto-generated if None and not in Jupyter.
+    output_dir : str, optional
+        Output directory for the saved file.
+    dpi : int, optional
+        Figure resolution (default 100).
+    format : str, optional
+        Image format (default "png").
+    grid : bool, optional
+        Show grid (default True).
+    legend : bool, optional
+        Show legend (default True).
+
+    Returns
+    -------
+    str or None
+        Absolute path to the saved file, or None if nothing was saved.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        import numpy as np
+        from electrical.utils.plot import plot_signals
+
+        t = np.linspace(0, 1/300e3, 200)
+        i_l = 2.0 + 0.3 * np.sin(2*np.pi*300e3*t)
+        v_out = 3.3 + 0.01 * np.sin(2*np.pi*300e3*t)
+
+        plot_signals(t, [
+            {"name": "Inductor Current", "values": i_l,
+             "ylabel": "Current (A)", "color": "#268bd2"},
+            {"name": "Output Voltage", "values": v_out,
+             "ylabel": "Voltage (V)", "color": "#dc322f"},
+        ], title="Buck Converter Waveforms")
+    """
+    n_signals = len(signals)
+    if n_signals == 0:
+        raise ValueError("At least one signal is required")
+
+    # Create subplots: one row per signal, shared x-axis
+    fig, axes = plt.subplots(n_signals, 1, figsize=figsize, sharex=True, **kwargs)
+
+    # Ensure axes is iterable even with a single signal
+    if n_signals == 1:
+        axes = [axes]
+
+    for i, sig in enumerate(signals):
+        ax = axes[i]
+        name = sig.get("name", f"Signal {i+1}")
+        values = sig["values"]
+        ylabel = sig.get("ylabel", "")
+        color = sig.get("color", None)
+        ls = sig.get("linestyle", "-")
+        lw = sig.get("linewidth", 2)
+        alpha = sig.get("alpha", 1.0)
+
+        ax.plot(t, values, color=color, linestyle=ls,
+                linewidth=lw, alpha=alpha, label=name)
+
+        if ylabel:
+            ax.set_ylabel(ylabel, fontsize=12)
+        if grid:
+            ax.grid(True, alpha=0.3)
+        if legend and name:
+            ax.legend(fontsize=10)
+
+        # Format y-axis with SI prefixes
+        ax.yaxis.set_major_formatter(
+            plt.FuncFormatter(lambda x, p: f"{x:.2g}")
+        )
+
+    # X-axis label on the bottom subplot only
+    axes[-1].set_xlabel(xlabel, fontsize=12)
+
+    # Overall title
+    if title:
+        fig.suptitle(title, fontsize=14, y=1.01)
+
+    plt.tight_layout()
+
+    # Use show_plot to handle display/save
+    return show_plot(filename=filename, output_dir=output_dir,
+                     dpi=dpi, format=format)
 
 
 # ── Cleanup ──────────────────────────────────────────────────────────────

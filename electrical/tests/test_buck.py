@@ -51,7 +51,8 @@ def test_summary():
     spec.design()
     summary = spec.summary()
     assert "Buck Converter" in summary
-    assert "µH" in summary
+    # Check for micro sign (µ U+00B5) or Greek mu (μ U+03BC) + H
+    assert "H" in summary and ("µ" in summary or "μ" in summary)
 
 
 def test_to_table():
